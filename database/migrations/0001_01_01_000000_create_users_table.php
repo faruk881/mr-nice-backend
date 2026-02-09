@@ -12,11 +12,36 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
+
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->text('phone')->nullable();
+
+            // OTP
+            $table->string('otp')->nullable();
+            $table->timestamp('otp_verified_at')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
+            
             $table->string('password');
+
+            $table->string('profile_photo')->nullable();
+            
+            // Account Status
+            $table->enum('account_type',['customer','courier','admin']);
+            $table->enum('status', ['active', 'suspended', 'banned'])->default('active');
+            $table->string('status_reason')->nullable(); // If user is banned then here store the reason.
+
+            // Stripe info
+            $table->string('stripe_customer_id')->nullable();
+            $table->string('stripe_account_id')->nullable();
+            $table->boolean('stripe_onboarded')->default(false);
+
+            // Moderation
+            $table->foreignId('moderated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('moderated_at')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });
