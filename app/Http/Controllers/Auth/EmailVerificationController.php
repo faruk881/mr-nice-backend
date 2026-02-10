@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ConfirmMailRequest;
-use App\Http\Requests\OtpResentRequest;
+use App\Http\Requests\Auth\ConfirmMailRequest;
+use App\Http\Requests\Auth\OtpResentRequest;
 use App\Http\Resources\AuthUserResource;
 use App\Models\User;
 use App\Services\OtpService;
@@ -54,10 +54,7 @@ class EmailVerificationController extends Controller
             // Return success message.
             return apiSuccess('email successfully verified, now you can log in', new AuthUserResource($user));
         } catch(\Throwable $e) {
-                return apiError(
-                    app()->isLocal() ? $e->getMessage() : 'Something went wrong',
-                500
-            );
+                return apiError(app()->isLocal() ? $e->getMessage() : 'Something went wrong', 500);
         }
     }
 
@@ -65,6 +62,7 @@ class EmailVerificationController extends Controller
     {
         try {
 
+            // Get the user
             $user = User::where('email', $request->email)->first();
 
             // Generic error (prevents enumeration)
@@ -74,10 +72,7 @@ class EmailVerificationController extends Controller
 
             // Already verified
             if ($user->email_verified_at) {
-                return apiError(
-                    'This email address has already been verified.',
-                    409
-                );
+                return apiError('This email address has already been verified.',409);
             }
 
             // Account inactive
@@ -88,20 +83,20 @@ class EmailVerificationController extends Controller
             // OTP expired or not generated yet → resend
             if (! $user->otp_expires_at || now()->gt($user->otp_expires_at)) {
 
-                $otpService->sendEmailOtp($user);
+                // Send the email otp
+                $otpResult = $otpService->sendEmailOtp($user);
 
-                return apiSuccess(
-                    'A verification code has been sent to your email.',
-                    null,
-                    200
-                );
+                // Check if there is error sending otp
+                if (!$otpResult['success']) {
+
+                    return apiError('Unable to send verification code. Please try again later.',500);
+                }
+
+                return apiSuccess('A verification code has been sent to your email.',null,200);
             }
 
             // OTP still valid → block resend
-            return apiError(
-                'A verification code was already sent. Please try again after it expires.',
-                429
-            );
+            return apiError('A verification code was already sent. Please try again after it expires.',429);
 
         } catch (\Throwable $e) {
             return apiError('Something went wrong.', 500);

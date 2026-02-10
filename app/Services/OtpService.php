@@ -23,15 +23,19 @@ class OtpService
                 ];
             }
 
+            // Generate otp
             $otp = random_int(100000, 999999);
 
+            // Save it the otp and its expiration to database
             $user->forceFill([
                 'otp' => Hash::make($otp),
                 'otp_expires_at' => now()->addMinutes(10),
             ])->save();
 
+            // Send email
             $user->notify(new EmailOtpNotification($otp));
 
+            // Return the success message
             return [
                 'success' => true,
                 'message' => 'A verification code has been sent to your email address.',
@@ -44,9 +48,10 @@ class OtpService
                 'error'   => $e->getMessage(),
             ]);
 
+            // Return the error message
             return [
                 'success' => false,
-                'message' => 'Unable to send the verification code at this time.',
+                'message' => 'Unable to send the verification code at this time. | ' . $e->getMessage,
             ];
         }
     }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UserRegisterRequest;
+use App\Http\Requests\Auth\UserRegisterRequest;
 use App\Http\Resources\AuthUserResource;
 use App\Models\User;
 use App\Services\OtpService;
@@ -23,17 +23,20 @@ class RegisterController extends Controller
             // Create the user
             $user = User::create($fields);
 
+            // Send the email otp
             $otpResult = $otpService->sendEmailOtp($user);
 
+            // Check if there is error sending otp
             if (!$otpResult['success']) {
                 DB::rollBack();
 
-                return apiError(
-                    'Unable to send verification code. Please try again later.',
-                    500
-                );
+                return apiError('Unable to send verification code. Please try again later.',500);
             }
+
+            // Commit the database
             DB::commit();
+
+            // Return the success message
             return apiSuccess(
                 'User registered successfully. A verification code has been sent to your email address.',
                 new AuthUserResource($user)
@@ -41,7 +44,7 @@ class RegisterController extends Controller
 
         } catch( \Throwable $e) {
             DB::rollBack();
-            return apiError('Registration failed. Please try again later. | ' . $e->getMessage, 500);
+            return apiError('Registration failed. Please try again later. | '.$e->getMessage().' | '.$e->getLine(), 500);
         }
     }
 }
