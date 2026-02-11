@@ -14,9 +14,12 @@ class EmailOtpNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(private int $otp)
+    private int $otp;
+    private string $otp_from;
+    public function __construct(int $otp, string $otp_from)
     {
-        //
+        $this->otp_from = $otp_from;
+        $this->otp = $otp;
     }
 
     /**
@@ -36,9 +39,11 @@ class EmailOtpNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Email Verification Code')
-            ->line("Your email verification code is {$this->otp}.")
-            ->line('This code will expire in 10 minutes.')
-            ->line('If you did not request this, please ignore this email.');
+            ->view('emails.otp',[
+                'otp' => $this->otp,
+                'otp_from' => $this->otp_from,
+                'name' => $notifiable->name,
+            ]);
     }
 
     /**

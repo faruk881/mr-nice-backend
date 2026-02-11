@@ -38,7 +38,7 @@ class ForgotPasswordController extends Controller
 
             // OTP expired or not generated yet → resend
             if (! $user->otp_expires_at || Carbon::now()->gt($user->otp_expires_at)) {
-                $otpService->sendEmailOtp($user);
+                $otpService->sendEmailOtp($user,'password_reset');
 
                 return apiSuccess('A verification code has been sent to your email.',null,200);
             }

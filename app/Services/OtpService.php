@@ -12,7 +12,7 @@ class OtpService
     /**
      * Send email OTP to user
      */
-    public function sendEmailOtp(User $user): array
+    public function sendEmailOtp(User $user, string $otp_from): array
     {
         try {
             // Prevent OTP spam
@@ -33,7 +33,7 @@ class OtpService
             ])->save();
 
             // Send email
-            $user->notify(new EmailOtpNotification($otp));
+            $user->notify(new EmailOtpNotification($otp,$otp_from));
 
             // Return the success message
             return [

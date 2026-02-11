@@ -24,7 +24,7 @@ class RegisterController extends Controller
             $user = User::create($fields);
 
             // Send the email otp
-            $otpResult = $otpService->sendEmailOtp($user);
+            $otpResult = $otpService->sendEmailOtp($user,'register');
 
             // Check if there is error sending otp
             if (!$otpResult['success']) {
