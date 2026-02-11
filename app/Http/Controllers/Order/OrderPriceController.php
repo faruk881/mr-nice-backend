@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Order;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\CalculatePriceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -12,9 +13,14 @@ class OrderPriceController extends Controller
     {
         // ... validation logic ...
         try {
-            $apiKey = config('services.google_maps.key'); // Set this in config/services.php
+            $apiKey = config('services.google_maps.key');
+            
             $origin = $request->pickup;      // "Mohakhali, Dhaka"
             $destination = $request->delivery; // "Mohammadpur, Dhaka"
+            $package_size = $request->package_size;
+            $items = $request->items;
+
+            $distance = 10;
 
             // $response = Http::withHeaders([
             //     'Content-Type' => 'application/json',

@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('profile_photo')->nullable();
             
             // Account Status
-            $table->enum('account_type',['customer','courier','admin']);
+            $table->enum('user_type',['customer','courier','admin']);
             $table->enum('status', ['active', 'suspended', 'banned'])->default('active');
             $table->string('status_reason')->nullable(); // If user is banned then here store the reason.
 

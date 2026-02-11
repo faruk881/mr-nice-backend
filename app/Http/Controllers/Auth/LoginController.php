@@ -31,7 +31,7 @@ class LoginController extends Controller
             if (! $user->email_verified_at) {
 
                 if ( ! $user->otp_expires_at || Carbon::now()->gt($user->otp_expires_at)) {
-                    $otpService->sendEmailOtp($user);
+                    $otpService->sendEmailOtp($user,'register');
                     return apiError('error with mail sending',403);
                 }
 
