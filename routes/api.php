@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\OrderPriceController;
 use Illuminate\Support\Facades\Route;
 
 // Auth Group
@@ -22,7 +23,10 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'store']);
     Route::post('/forgot-password/verify', [ForgotPasswordController::class, 'verify']);
     Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'reset']);
+});
 
+Route::prefix('orders')->group(function(){
+    Route::post('/calculate-price', [OrderPriceController::class, 'estimate']);
 });
 
 // Profile Group (Private)
