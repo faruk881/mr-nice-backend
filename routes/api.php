@@ -36,14 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Admin Routes
-Route::middleware('auth:sanctum','admin')->group(function () {
-
-});
-
 Route::prefix('admin')->middleware(['auth:sanctum', 'user_type:admin'])->group(function () {
     // Get and Update Pricing Settings
-    Route::get('delivery-pricing-settings', [DeliveryPricingSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
-    Route::patch('delivery-pricing-settings/distance', [DeliveryPricingSettingController::class, 'updateDistancePrice'])->name('admin.delivery-pricing-settings.update-distance');
-    Route::patch('delivery-pricing-settings/item-type', [DeliveryPricingSettingController::class, 'updateItemTypePrice'])->name('admin.delivery-pricing-settings.update-item-type');
+    Route::get('/delivery-pricing-settings', [DeliveryPricingSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
+    Route::patch('/delivery-pricing-settings/distance', [DeliveryPricingSettingController::class, 'updateDistancePrice'])->name('admin.delivery-pricing-settings.update-distance');
+    Route::patch('/delivery-pricing-settings/item-type', [DeliveryPricingSettingController::class, 'updateItemTypePrice'])->name('admin.delivery-pricing-settings.update-item-type');
 });
 

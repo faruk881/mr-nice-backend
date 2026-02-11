@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\CalculatePriceRequest;
+use App\Models\DeliveryPricingSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -13,14 +14,59 @@ class OrderPriceController extends Controller
     {
         // ... validation logic ...
         try {
+
+            // Get the pricing settings
+            $prices = DeliveryPricingSetting::first();
+
+            // Check if price exists
+            if (!$prices) {
+                return apiError('Delivery pricing settings not found', 404);
+            }
+
+            // google api key needed later
             $apiKey = config('services.google_maps.key');
             
-            $origin = $request->pickup;      // "Mohakhali, Dhaka"
-            $destination = $request->delivery; // "Mohammadpur, Dhaka"
-            $package_size = $request->package_size;
+            // Get requests
+            $origin = $request->pickup; 
+            $destination = $request->delivery; 
+            
             $items = $request->items;
+            
 
-            $distance = 10;
+            // Get Delivery Settings
+            $baseFare = (float) $prices->base_fare;
+            $pricePerKm =(float) $prices->price_per_km;
+            $packagePrices = [
+                'small' => (float) $prices->small_package_price,
+                'medium' => (float) $prices->medium_package_price,
+                'large' => (float) $prices->large_package_price,
+            ];
+
+            // Get distance
+            $distance = 2;
+
+            // Get package size
+            $packageSize = $request->package_size;
+            $packagePrice = $packagePrices[$packageSize];
+
+            // Calculate Total Price
+            $totalPrice = max(($distance*$pricePerKm)+$packagePrice,$baseFare);
+
+            // Prepare response data
+            $data = [
+                'items' => $items,
+                'base_fare' => $baseFare,
+                'price_per_km' => $pricePerKm,
+                'total_distance' => $distance,
+                'package_size' => $packageSize,
+                'package_price' => $packagePrice,
+                'total_price' => $totalPrice,
+            ];
+
+            // Return with data
+            return apiSuccess('Delivery price calculated successfully', $data);
+
+         
 
             // $response = Http::withHeaders([
             //     'Content-Type' => 'application/json',
