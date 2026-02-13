@@ -34,16 +34,16 @@ class OrderPriceController extends Controller
             
 
             // Get Delivery Settings
-            $baseFare = (float) $prices->base_fare;
-            $pricePerKm =(float) $prices->price_per_km;
+            $baseFare = (string) $prices->base_fare;
+            $pricePerKm =(string) $prices->price_per_km;
             $packagePrices = [
-                'small' => (float) $prices->small_package_price,
-                'medium' => (float) $prices->medium_package_price,
-                'large' => (float) $prices->large_package_price,
+                'small' => (string) $prices->small_package_price,
+                'medium' => (string) $prices->medium_package_price,
+                'large' => (string) $prices->large_package_price,
             ];
 
             // Get distance
-            $distance = 2;
+            $distance = '2';
 
             // Get package size
             $packageSize = $request->package_size;
