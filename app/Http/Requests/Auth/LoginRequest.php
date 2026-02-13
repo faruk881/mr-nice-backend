@@ -24,6 +24,7 @@ class LoginRequest extends FormRequest
         return [
             'email'    => 'required|email',
             'password' => 'required|string|min:8',
+            'type'     => 'required|in:customer,courier,admin',
         ];
     }
 
@@ -35,6 +36,9 @@ class LoginRequest extends FormRequest
 
             'password.required' => 'A password is required.',
             'password.min'      => 'The password must be at least 8 characters long.',
+
+            'type.in'           => 'Please enter a valid user type',
+            'type.required'     => 'User type is required.'
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UserRegisterRequest;
 use App\Http\Resources\AuthUserResource;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
@@ -22,6 +23,21 @@ class RegisterController extends Controller
             
             // Create the user
             $user = User::create($fields);
+
+            // Get the role name
+            $role = $request->type;
+
+            // find the role
+            $userRole = Role::where('name', $role)->first();
+
+            // Check if role exists
+            if (!$userRole) {
+                DB::rollBack();
+                return apiError('Invalid user type', 404);
+            }
+
+            // Assign user role
+            $user->roles()->attach($userRole->id);
 
             // Send the email otp
             $otpResult = $otpService->sendEmailOtp($user,'register');

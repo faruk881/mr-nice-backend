@@ -21,11 +21,6 @@ class LoginController extends Controller
             if (! $user || ! Hash::check($request->password, $user->password)) {
                 return apiError('Invalid login credentials.', 401);
             }
-
-            // Check if the user is created using google?
-            if(!is_null($user->google_id)){
-                return apiError('User created using google. Please sign in using google.',403);
-            }
             
             // Check if email verified.
             if (! $user->email_verified_at) {
@@ -40,23 +35,33 @@ class LoginController extends Controller
                     403
                 );
             }
+
             // Account status check
             if ($user->status !== 'active') {
                 return apiError('Your account is not active.', 403);
             }
 
+            // Check the role name
+            $roleName = $request->type;
+            if (!$user->roles()->where('name', $roleName)->exists()) {
+                return apiError('You do not have access to this role.', 403);
+            }
+
             // Check users login session. if 3 session exists then log out from all session and login.
             $activeSessions = $user->tokens()->count();
-            if($activeSessions >=3) {
+            if($activeSessions >=5) {
                 $user->tokens()->delete();
             }
 
             // Create usertoken. also save the device name
-            $token = $user->createToken($request->device_name ?? 'web')->plainTextToken;
+            $token = $user->createToken($request->device_name ?? 'web',[
+                'role' => $roleName,
+            ])->plainTextToken;
 
             // Return success message.
             return apiSuccess('Login successful.', [
                 'user'  => $user,
+                'role' => $roleName,
                 'token' => $token,
             ]);
 

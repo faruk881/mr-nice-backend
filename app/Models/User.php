@@ -49,4 +49,14 @@ class User extends Authenticatable
             'otp_verified_at' => 'datetime',
         ];
     }
+
+    public function roles() {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function courierProfile() {
+        return $this->hasOne(CourierProfile::class);
+    }
+
+
 }

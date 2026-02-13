@@ -38,6 +38,11 @@ class DeliveryPricingSettingController extends Controller
                 return apiError('Delivery pricing settings not found', 404);
             }
 
+            // Check if the price is same
+            if ($prices->price_per_km == $request->input('price_per_km')) {
+                return apiError('You entered same price.', 400);
+            }
+
             // Update the price
             $prices->update([
                 'price_per_km' => $request->input('price_per_km')
@@ -60,6 +65,14 @@ class DeliveryPricingSettingController extends Controller
             if (!$prices) {
                 return apiError('Delivery pricing settings not found', 404);
             }
+
+            // Check if same package price entered
+            if($prices->small_package_price == $request->input('small_package_price') &&
+                $prices->medium_package_price == $request->input('medium_package_price') &&
+                $prices->large_package_price == $request->input('large_package_price')){
+                return apiError('You entered same prices.', 400);
+            }
+
 
             // Update the price
             $prices->update([

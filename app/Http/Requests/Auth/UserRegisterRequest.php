@@ -31,7 +31,8 @@ class UserRegisterRequest extends FormRequest
             // Regex ensures it looks like a phone number (numbers, +, -, spaces)
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|unique:users,phone',
             
-            'user_type' => 'required|in:customer,courier',
+            // Check user type courier or admin
+            'type' => 'required|in:customer,courier',
             
             // 'Password::defaults()' follows your App's security policy (e.g. mixed case)
             'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
@@ -56,7 +57,7 @@ class UserRegisterRequest extends FormRequest
             'phone.unique' => 'This phone number is already in use.',
             
             // User Type messages
-            'user_type.in' => 'Please select a valid role: either Customer or Courier.',
+            'type.in' => 'Please select a valid role: either Customer or Courier.',
             
             // Password messages
             'password.required' => 'A secure password is required.',

@@ -7,8 +7,10 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Customer\CustomerCourierController;
 use App\Http\Controllers\Order\OrderPriceController;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 // Auth Group
 Route::prefix('auth')->group(function () {
@@ -35,8 +37,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile/password', [PasswordUpdateController::class, 'update']);
 });
 
+// Customer Routes
+Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
+    Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
+    
+});
+
 // Admin Routes
-Route::prefix('admin')->middleware(['auth:sanctum', 'user_type:admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Get and Update Pricing Settings
     Route::get('/delivery-pricing-settings', [DeliveryPricingSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
     Route::patch('/delivery-pricing-settings/distance', [DeliveryPricingSettingController::class, 'updateDistancePrice'])->name('admin.delivery-pricing-settings.update-distance');
