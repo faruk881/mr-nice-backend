@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\CustomerBecomeCourierRequest;
+use App\Models\Role;
 use Illuminate\Http\Request;
 
 class CustomerCourierController extends Controller
@@ -41,6 +42,12 @@ class CustomerCourierController extends Controller
                 'id_document' => $path,
                 'document_status' => 'pending',
             ]);
+
+            // Get courier id
+            $courierId = Role::where('name','courier')->first()->id;
+
+            // Add courier role
+            $user->roles()->syncWithoutDetaching([$courierId]);
 
             // Retuen message
             return apiSuccess('Courier application submitted successfully. Await admin approval.', $profile);

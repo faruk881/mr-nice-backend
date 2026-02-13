@@ -47,6 +47,16 @@ class LoginController extends Controller
                 return apiError('You do not have access to this role.', 403);
             }
 
+            // Check if courier profile documents verified or pending
+            if($roleName === 'courier' && $user->courierProfile->document_status == 'pending') {
+                return apiError('Cannot log in. The document is in pending status');
+            }
+
+            // Check if courier profile document is rejected
+            if($roleName === 'courier' && $user->courierProfile->document_status == 'rejected') {
+                return apiError('Cannot log in. The document is rejected by admin');
+            }
+
             // Check users login session. if 3 session exists then log out from all session and login.
             $activeSessions = $user->tokens()->count();
             if($activeSessions >=5) {
