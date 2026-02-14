@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Customer\CustomerCourierController;
 use App\Http\Controllers\Customer\DeliveryRequestController;
+use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
     Route::post('/delivery-request',[DeliveryRequestController::class,'store'])->name('customer.delivery-request.create');
-    
+    Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 });
 
 // Admin Routes

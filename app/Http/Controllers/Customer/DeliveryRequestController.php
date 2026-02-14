@@ -77,6 +77,12 @@ class DeliveryRequestController extends Controller
                 'booking_date'     => now(), // can be customized
             ]);
 
+            // Generate and save order id
+            $order->order_number = 'LX-'.str_pad($order->id, 4, '0', STR_PAD_LEFT);
+            $order->save();
+
+            // Return response
+
             $estimates = [
                 'distance' => $distance,
                 'distance_fee' => $distanceFee,

@@ -17,6 +17,8 @@ return new class extends Migration
 
             $table->string('stripe_payment_intent_id')->nullable();
             $table->string('stripe_charge_id')->nullable();
+            $table->string('stripe_checkout_session_id')->nullable(); // for payment links
+            $table->string('payment_link')->nullable(); // optional: store actual link URL
 
             $table->decimal('amount', 10, 2);
             $table->string('currency')->default('chf'); // TWINT uses CHF
