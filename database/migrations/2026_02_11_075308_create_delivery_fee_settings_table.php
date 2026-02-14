@@ -11,18 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('delivery_pricing_settings', function (Blueprint $table) {
+        Schema::create('delivery_fee_settings', function (Blueprint $table) {
             $table->id();
             // Currency (ISO Code)
             $table->string('currency', 3)->default('CHF');
 
             // Pricing Fields
             $table->decimal('base_fare', 10, 2)->default(0);
-            $table->decimal('price_per_km', 10, 2)->default(0);
+            $table->decimal('per_km_fee', 10, 2)->default(0);
 
-            $table->decimal('small_package_price', 10, 2)->default(0);
-            $table->decimal('medium_package_price', 10, 2)->default(0);
-            $table->decimal('large_package_price', 10, 2)->default(0);
+            $table->decimal('small_package_fee', 10, 2)->default(0);
+            $table->decimal('medium_package_fee', 10, 2)->default(0);
+            $table->decimal('large_package_fee', 10, 2)->default(0);
+            $table->decimal('service_fee',10,2)->default(0);
 
             // Track which admin updated it
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
@@ -36,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('delivery_pricing_settings');
+        Schema::dropIfExists('delivery_fee_settings');
     }
 };

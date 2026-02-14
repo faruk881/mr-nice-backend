@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\CalculatePriceRequest;
-use App\Models\DeliveryPricingSetting;
+use App\Models\DeliveryFeeSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -16,7 +16,7 @@ class OrderPriceController extends Controller
         try {
 
             // Get the pricing settings
-            $prices = DeliveryPricingSetting::first();
+            $prices = DeliveryFeeSetting::first();
 
             // Check if price exists
             if (!$prices) {
@@ -35,11 +35,11 @@ class OrderPriceController extends Controller
 
             // Get Delivery Settings
             $baseFare = (string) $prices->base_fare;
-            $pricePerKm =(string) $prices->price_per_km;
+            $pricePerKm =(string) $prices->per_km_fee;
             $packagePrices = [
-                'small' => (string) $prices->small_package_price,
-                'medium' => (string) $prices->medium_package_price,
-                'large' => (string) $prices->large_package_price,
+                'small' => (string) $prices->small_package_fee,
+                'medium' => (string) $prices->medium_package_fee,
+                'large' => (string) $prices->large_package_fee,
             ];
 
             // Get distance

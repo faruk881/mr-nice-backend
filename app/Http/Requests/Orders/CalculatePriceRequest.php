@@ -23,8 +23,8 @@ class CalculatePriceRequest extends FormRequest
     {
         return [
             'package_size' => 'required|in:small,medium,large',
-            'pickup' => 'required',
-            'delivery' => 'required',
+            'pickup_address' => 'required',
+            'delivery_address' => 'required',
             'items' => 'required'
         ];
     }

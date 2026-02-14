@@ -15,11 +15,16 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, $role): Response
     {
+        // Get the user and role name
         $user = $request->user();
         $role = $role;
-        if ($user && $user->roles()->where('name', $role)->exists()) {
+        
+        // Check user role
+        if ($user && $user->currentAccessToken()?->can('role:' . $role)) {
             return $next($request);
         }
-        return apiError('Unauthorized', 403);
+
+        // Return the message
+        return apiError('Unauthorized. '.ucfirst($role).'s only.', 403);
     }
 }

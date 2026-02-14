@@ -4,7 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDistancePriceRequest extends FormRequest
+class UpdateDistanceFeeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,16 +22,16 @@ class UpdateDistancePriceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'price_per_km' => 'required|numeric|min:0'
+            'per_km_fee' => 'required|numeric|min:0'
         ];
     }
 
     public function messages(): array
     {
         return [
-            'price_per_km.required' => 'Price per km is required',
-            'price_per_km.numeric' => 'Price per km must be a number',
-            'price_per_km.min' => 'Price per km must be greater than 0'
+            'per_km_fee.required' => 'Per km fee is required',
+            'per_km_fee.numeric' => 'Per km fee must be a number',
+            'per_km_fee.min' => 'Per km fee must be greater than 0'
         ];
     }
 }

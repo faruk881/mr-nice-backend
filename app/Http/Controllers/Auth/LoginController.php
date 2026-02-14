@@ -54,19 +54,17 @@ class LoginController extends Controller
 
             // Check if courier profile document is rejected
             if($roleName === 'courier' && $user->courierProfile->document_status == 'rejected') {
-                return apiError('Cannot log in. The document is rejected by admin');
+                return apiError('Cannot log in. Your id document is rejected by admin');
             }
 
             // Check users login session. if 3 session exists then log out from all session and login.
             $activeSessions = $user->tokens()->count();
-            if($activeSessions >=5) {
+            if($activeSessions >= 10) {
                 $user->tokens()->delete();
             }
 
             // Create usertoken. also save the device name
-            $token = $user->createToken($request->device_name ?? 'web',[
-                'role' => $roleName,
-            ])->plainTextToken;
+            $token = $user->createToken($request->device_name ?? 'web',['role:'.$roleName,])->plainTextToken;
 
             // Return success message.
             return apiSuccess('Login successful.', [
