@@ -38,4 +38,9 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET_KEY'),
+    ],
+
 ];

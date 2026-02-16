@@ -9,9 +9,44 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class DeliveryRequestController extends Controller
+class OrdersController extends Controller
 {
-    public function store(DeliveryRequestRequest $request) {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $perPage = $request->query('per_page', 10);
+        $status = $request->query('status', 'all');
+
+        $query = Order::query();
+
+        switch ($status) {
+            case 'active':
+                $query->where('status', 'pending');
+                break;
+            case 'completed':
+                $query->where('status', 'delivered');
+                break;
+            case 'cancelled':
+                $query->where('status', 'cancelled');
+                break;
+            case 'all':
+            default:
+                // no filtering
+                break;
+        }
+
+        $orders = $query->paginate($perPage);
+
+        return apiSuccess('Orders loaded', $orders);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(DeliveryRequestRequest $request)
+    {
         try {
             
             // Validate request
@@ -103,5 +138,29 @@ class DeliveryRequestController extends Controller
         } catch (\Throwable $e) {
             return apiError($e->getMessage());
         }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
     }
 }

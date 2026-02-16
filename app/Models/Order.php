@@ -38,4 +38,16 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'courier_id');
     }
+
+    // --- Relationship: an order can have multiple payments ---
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    // Optional: get latest payment
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
+    }
 }

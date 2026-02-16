@@ -8,11 +8,15 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Customer\CustomerCourierController;
-use App\Http\Controllers\Customer\DeliveryRequestController;
+use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
+use App\Http\Controllers\Stripe\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
+
+// Webhooks
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
 // Auth Group
 Route::prefix('auth')->group(function () {
@@ -42,7 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
 // Customer Routes
 Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
-    Route::post('/delivery-request',[DeliveryRequestController::class,'store'])->name('customer.delivery-request.create');
+    Route::post('/orders', [OrdersController::class, 'store'])->name('customer.orders.store');
+    Route::get('/orders', [OrdersController::class, 'index'])->name('customer.orders.index');
+
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 });
 
@@ -53,4 +59,22 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
 });
+
+// Only Test Purpose Route
+Route::get('/payment-success/{orderId}', function($orderId) {
+    // Find payment and order
+    $order = \App\Models\Order::findOrFail($orderId);
+    return response()->json([
+        'message' => "Payment successful for order #{$order->id}",
+        'order' => $order
+    ]);
+})->name('payment.success');
+
+Route::get('/payment-cancel/{orderId}', function($orderId) {
+    $order = \App\Models\Order::findOrFail($orderId);
+    return response()->json([
+        'message' => "Payment canceled for order #{$order->id}",
+        'order' => $order
+    ]);
+})->name('payment.cancel');
 
