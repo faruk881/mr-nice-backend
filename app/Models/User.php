@@ -54,7 +54,21 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
-    public function courierProfile() {
+    public function orders()
+    {
+        // Orders created by this user (customer)
+        return $this->hasMany(Order::class, 'user_id');
+    }
+
+    public function assignedOrders()
+    {
+        // Orders assigned to this user as courier
+        return $this->hasMany(Order::class, 'courier_id');
+    }
+
+    public function courierProfile()
+    {
+        // One-to-one courier profile
         return $this->hasOne(CourierProfile::class);
     }
 

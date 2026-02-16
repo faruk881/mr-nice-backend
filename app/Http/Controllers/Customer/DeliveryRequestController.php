@@ -84,11 +84,11 @@ class DeliveryRequestController extends Controller
             // Return response
 
             $estimates = [
-                'distance' => $distance,
-                'distance_fee' => $distanceFee,
+                'distance' => $order->distance,
+                'per_km_fee' => $order->per_km_fee,
                 'package_fee' => $packagePrice,
-                'service_fee' => $serviceFee,
-                'total_fee' => $totalFee,
+                'service_fee' => $order->service_fee,
+                'total_fee' => $order->total_fee,
                 
             ];
 

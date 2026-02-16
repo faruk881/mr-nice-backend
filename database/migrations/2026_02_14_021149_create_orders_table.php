@@ -37,7 +37,7 @@ return new class extends Migration
             $table->enum('package_size',['small','medium','large']);
             $table->string('additional_notes')->nullable();
             $table->decimal('base_fare', 10, 2);
-            $table->decimal('distance_fee', 10, 2);
+            $table->decimal('per_km_fee', 10, 2);
             $table->decimal('service_fee', 10, 2);
             $table->decimal('total_fee', 10, 2);
             $table->boolean('is_paid')->default(false);
