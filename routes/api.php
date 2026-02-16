@@ -51,6 +51,7 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     Route::post('/orders', [OrdersController::class, 'store'])->name('customer.orders.store');
     Route::get('/orders', [OrdersController::class, 'index'])->name('customer.orders.index');
     Route::get('/orders/{id}', [OrdersController::class, 'show'])->name('customer.orders.show');
+    Route::patch('/orders/{id}', [OrdersController::class, 'update'])->name('customer.orders.update');
 
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 });

@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\DeliveryRequestRequest;
+use App\Http\Requests\Customer\Order\OrderCancelRequest;
 use App\Models\DeliveryFeeSetting;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Stripe\Refund;
+use Stripe\Stripe;
 
 class OrdersController extends Controller
 {
@@ -158,9 +163,76 @@ class OrdersController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(OrderCancelRequest $request, string $id)
     {
-        //
+        // Get the order
+        $order = Order::find($id);
+
+        // Check if order exists
+        if(!$order) {
+            return apiError('Order not found', 404);
+        }
+
+        // Cancel if order status is only pending_payment and pending
+        if($order->status == 'pending_payment') {
+            $order->status = 'cancelled';
+            $order->status_reason = $request->cancel_reason;
+            $order->save();
+            return apiSuccess('Order Cancelled.',$order); 
+        }
+        
+        
+        if($order->is_paid && $order->status == 'pending') {
+            
+            // Get the payment
+            $payment = $order->payments()->where('status', 'succeeded')->latest()->first();
+
+            if (!$payment || !$payment->stripe_payment_intent_id) {
+                return apiError('No valid payment found to refund.', 400);
+            }
+
+            // Refund the payment
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            DB::beginTransaction();
+
+            try {
+                // Create Stripe refund
+                $refund = Refund::create([
+                    'payment_intent' => $payment->stripe_payment_intent_id,
+                ]);
+
+                // Update payment record
+                $payment->update([
+                    'status' => 'refunded',
+                    'stripe_response' => json_encode($refund),
+                ]);
+
+                // Update order
+                $order->update([
+                    'status' => 'cancelled',
+                    'status_reason' => $request->cancel_reason,
+                    'is_paid' => false,
+                ]);
+
+                DB::commit();
+
+                return apiSuccess('Order refunded and cancelled successfully.', $order);
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                Log::error('Stripe Refund Failed: ' . $e->getMessage(), [
+                    'order_id' => $order->id,
+                    'payment_intent' => $payment->stripe_payment_intent_id,
+                ]);
+
+                return apiError('Refund failed. Please try again.', 500);
+            }
+        }
+
+        // Otherwise cannot cancel the order
+        return apiError('Cannot cancel this order', 403);
+        
     }
 
     /**
@@ -168,6 +240,6 @@ class OrdersController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        return apiSuccess('destroy');
     }
 }
