@@ -46,8 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
 // Customer Routes
 Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
+    
+    // Orders
     Route::post('/orders', [OrdersController::class, 'store'])->name('customer.orders.store');
     Route::get('/orders', [OrdersController::class, 'index'])->name('customer.orders.index');
+    Route::get('/orders/{id}', [OrdersController::class, 'show'])->name('customer.orders.show');
 
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 });
@@ -59,6 +62,13 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
 });
+
+
+
+
+
+
+
 
 // Only Test Purpose Route
 Route::get('/payment-success/{orderId}', function($orderId) {

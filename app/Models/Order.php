@@ -29,25 +29,31 @@ class Order extends Model
         'booking_date'    => 'datetime',
     ];
 
-    public function user()
-    {
+    public function user() {
         return $this->belongsTo(User::class);
     }
 
-    public function courier()
-    {
+    public function courier() {
         return $this->belongsTo(User::class, 'courier_id');
     }
 
     // --- Relationship: an order can have multiple payments ---
-    public function payments()
-    {
+    public function payments() {
         return $this->hasMany(Payment::class);
     }
 
     // Optional: get latest payment
-    public function latestPayment()
-    {
+    public function latestPayment() {
         return $this->hasOne(Payment::class)->latestOfMany();
+    }
+
+    public function isPaid() {
+        return $this->payments()
+            ->where('status', 'succeeded')
+            ->exists();
+    }
+
+    public function paymentMethod() {
+        return $this->payment_method;
     }
 }

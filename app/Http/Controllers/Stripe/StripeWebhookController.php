@@ -9,6 +9,7 @@ use App\Models\Payment;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use Exception;
+use Stripe\StripeClient;
 
 class StripeWebhookController extends Controller
 {
@@ -123,10 +124,30 @@ class StripeWebhookController extends Controller
 
         if ($payment->status != 'succeeded') {
             try {
+
+                $stripe = new StripeClient(config('services.stripe.secret'));
+
+                // Retrieve PaymentIntent to get payment method type
+                $paymentIntent = $stripe->paymentIntents->retrieve(
+                    $session->payment_intent,
+                    []
+                );
+
+                // Retrieve PaymentMethod to get payment method type
+                $paymentMethodType = null;
+                if (!empty($paymentIntent->payment_method)) {
+                    $paymentMethod = $stripe->paymentMethods->retrieve(
+                        $paymentIntent->payment_method,
+                        []
+                    );
+                    $paymentMethodType = $paymentMethod->type; // card | twint | etc
+                }
+
                 $payment->update([
                     'status' => 'succeeded',
                     'stripe_payment_intent_id' => $session->payment_intent,
                     'stripe_charge_id' => $session->payment_status === 'paid' ? $session->payment_intent : null,
+                    'payment_method' => $paymentMethodType,
                     'stripe_response' => json_encode($session),
                 ]);
 
@@ -140,3 +161,6 @@ class StripeWebhookController extends Controller
         }
     }
 }
+
+
+

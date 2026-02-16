@@ -145,7 +145,14 @@ class OrdersController extends Controller
      */
     public function show(string $id)
     {
-        //
+        // Get the order
+        $order = Order::with(['courier','courier.courierProfile', 'payments'])->find($id);
+
+        // Check if order exists
+        if (!$order) {
+            return apiError('Order not found', 404);
+        }
+        return apiSuccess('Order loaded',$order);
     }
 
     /**
