@@ -19,7 +19,7 @@ class Order extends Model
         'distance'        => 'decimal:2',
         'base_fare'       => 'decimal:2',
         'per_km_fee'      => 'decimal:2',
-        'service_fee'     => 'decimal:2',
+        'package_fee'     => 'decimal:2',
         'total_fee'       => 'decimal:2',
 
         // Boolean

@@ -14,6 +14,5 @@ class DeliveryFeeSetting extends Model
         'small_package_fee' => 'decimal:2',
         'medium_package_fee' => 'decimal:2',
         'large_package_fee' => 'decimal:2',
-        'service_fee' => 'decimal:2'
     ];
 }

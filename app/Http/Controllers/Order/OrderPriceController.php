@@ -56,11 +56,11 @@ class OrderPriceController extends Controller
             $data = [
                 'items' => $items,
                 'base_fare' => $baseFare,
-                'price_per_km' => $pricePerKm,
+                'per_km_price' => $pricePerKm,
                 'total_distance' => $distance,
                 'package_size' => $packageSize,
-                'package_price' => $packagePrice,
-                'total_price' => $totalPrice,
+                'service_fee' => $packagePrice,
+                'total_fee' => $totalPrice,
             ];
 
             // Return with data

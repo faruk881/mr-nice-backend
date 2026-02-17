@@ -38,7 +38,7 @@ return new class extends Migration
             $table->string('additional_notes')->nullable();
             $table->decimal('base_fare', 10, 2);
             $table->decimal('per_km_fee', 10, 2);
-            $table->decimal('service_fee', 10, 2);
+            $table->decimal('package_fee', 10, 2);
             $table->decimal('total_fee', 10, 2);
             $table->boolean('is_paid')->default(false);
 

@@ -76,7 +76,6 @@ class OrdersController extends Controller
             // Get Delivery pricing settings
             $prices = DeliveryFeeSetting::first();
 
-            $serviceFee = $prices->service_fee;
             $baseFare = $prices->base_fare;
             $pricePerKm = $prices->per_km_fee;
             $distanceFee = $distance*$pricePerKm;
@@ -91,7 +90,7 @@ class OrdersController extends Controller
             $packageSize = $request->package_size;
             $packagePrice = $packagePrices[$packageSize];
 
-            $totalFee = max($distanceFee+$packagePrice+$serviceFee,$baseFare);
+            $totalFee = max($distanceFee+$packagePrice,$baseFare);
 
             // Create order
             $order = Order::create([
@@ -111,7 +110,7 @@ class OrdersController extends Controller
                 'distance'         => $distance,
                 'base_fare'        => $baseFare,
                 'per_km_fee'       => $pricePerKm,
-                'service_fee'      => $serviceFee,
+                'package_fee'      => $packagePrice,
                 'total_fee'        => $totalFee,
                 'status'           => 'pending_payment',
                 'booking_date'     => now(), // can be customized
@@ -127,7 +126,6 @@ class OrdersController extends Controller
                 'distance' => $order->distance,
                 'per_km_fee' => $order->per_km_fee,
                 'package_fee' => $packagePrice,
-                'service_fee' => $order->service_fee,
                 'total_fee' => $order->total_fee,
                 
             ];

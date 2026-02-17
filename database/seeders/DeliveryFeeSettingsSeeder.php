@@ -20,7 +20,6 @@ class DeliveryFeeSettingsSeeder extends Seeder
             'small_package_fee' => 5,
             'medium_package_fee' => 8,
             'large_package_fee' => 12,
-            'service_fee' => 5,
         ]);
     }
 }

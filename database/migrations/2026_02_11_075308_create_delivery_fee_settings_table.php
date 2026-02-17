@@ -23,7 +23,6 @@ return new class extends Migration
             $table->decimal('small_package_fee', 10, 2)->default(0);
             $table->decimal('medium_package_fee', 10, 2)->default(0);
             $table->decimal('large_package_fee', 10, 2)->default(0);
-            $table->decimal('service_fee',10,2)->default(0);
 
             // Track which admin updated it
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
