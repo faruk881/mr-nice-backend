@@ -56,4 +56,10 @@ class Order extends Model
     public function paymentMethod() {
         return $this->payment_method;
     }
+    public function refund()
+    {
+        return $this->hasOneThrough(Refund::class, Payment::class);
+    }
+
+
 }

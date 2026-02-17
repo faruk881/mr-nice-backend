@@ -12,4 +12,10 @@ class Payment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function refund() 
+    {
+        return $this->hasOne(Refund::class);
+    }
+    }
 }
