@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\PaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -13,14 +14,12 @@ use Stripe\Stripe;
 
 class PaymentController extends Controller
 {
-    public function store(Request $request, $orderId) {
+    public function store(PaymentRequest $request, $orderId) {
         $order = Order::with('user')->findOrFail($orderId);
         $user = $order->user;
 
         if ($order->is_paid) {
-            return response()->json([
-                'message' => 'Order already paid.'
-            ], 400);
+            return apiError('Order already paid.', 400);
         }
 
         Stripe::setApiKey(config('services.stripe.secret'));
@@ -38,9 +37,9 @@ class PaymentController extends Controller
             $stripeCustomer = Customer::retrieve($user->stripe_customer_id);
         }
 
-        $usePaymentLink = $request->input('use_payment_link', true);
+        $paymentMode = $request->payment_mode;
 
-        if ($usePaymentLink) {
+        if ($paymentMode == 'link') {
             // --- Checkout Session / Payment Link ---
             $session = Session::create([
                 'customer' => $stripeCustomer->id,
@@ -76,40 +75,41 @@ class PaymentController extends Controller
                 'stripe_customer_id' => $stripeCustomer->id,
             ]);
 
-            return response()->json([
+            return apiSuccess('Payment link created successfully.', [
                 'payment_link' => $session->url
+                
+            ]);
+        }
+        if ($paymentMode == 'intent') {
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $order->total_fee * 100,
+                'currency' => 'chf',
+                'customer' => $stripeCustomer->id,
+                'payment_method_types' => ['card','twint'],
+                // 'automatic_payment_methods' => [
+                //     'enabled' => true,
+                // ],
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'user_id' => $user->id,
+                ]
             ]);
 
+            // Store payment record
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'stripe_payment_intent_id' => $paymentIntent->id,
+                'amount' => $order->total_fee,
+                'currency' => 'chf',
+                'status' => 'pending',
+                'stripe_customer_id' => $stripeCustomer->id,
+            ]);
+
+            return apiSuccess('Payment intent created successfully.',[
+                'publishable_key' => config('services.stripe.publishable'),
+                'client_secret' => $paymentIntent->client_secret
+            ]);
         }
-        // else {
-        //     // --- PaymentIntent (frontend flow) ---
-        //     $paymentIntent = PaymentIntent::create([
-        //         'amount' => $order->total_fee * 100,
-        //         'currency' => 'chf',
-        //         'customer' => $stripeCustomer->id,
-        //         'automatic_payment_methods' => [
-        //             'enabled' => true,
-        //         ],
-        //         'metadata' => [
-        //             'order_id' => $order->id,
-        //             'user_id' => $user->id,
-        //         ]
-        //     ]);
-
-        //     // Store payment record
-        //     $payment = Payment::create([
-        //         'order_id' => $order->id,
-        //         'stripe_payment_intent_id' => $paymentIntent->id,
-        //         'amount' => $order->total_fee,
-        //         'currency' => 'chf',
-        //         'status' => 'pending',
-        //         'stripe_customer_id' => $stripeCustomer->id,
-        //     ]);
-
-        //     return response()->json([
-        //         'client_secret' => $paymentIntent->client_secret
-        //     ]);
-        // }
         
     }
 }

@@ -18,6 +18,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/public/payment-intent-test.html
 /vendor
 Homestead.json
 Homestead.yaml
