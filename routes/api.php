@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminOrderRefundController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -18,7 +20,10 @@ use Symfony\Component\HttpFoundation\Request;
 // Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
-// Auth Group
+// Public Order Price Estimation
+Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
+
+// Auth Routes
 Route::prefix('auth')->group(function () {
     Route::post('/register', [RegisterController::class, 'store']);
     Route::post('/login', [LoginController::class, 'store']);
@@ -34,10 +39,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'reset']);
 });
 
-Route::prefix('orders')->group(function(){
-    Route::post('/calculate-price', [OrderPriceController::class, 'estimate']);
-});
-
 // Profile Group
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile/password', [PasswordUpdateController::class, 'update']);
@@ -48,11 +49,9 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
     
     // Orders
-    Route::post('/orders', [OrdersController::class, 'store'])->name('customer.orders.store');
-    Route::get('/orders', [OrdersController::class, 'index'])->name('customer.orders.index');
-    Route::get('/orders/{id}', [OrdersController::class, 'show'])->name('customer.orders.show');
-    Route::patch('/orders/{id}', [OrdersController::class, 'update'])->name('customer.orders.update');
+    Route::apiResource('orders', OrdersController::class)->only(['index','store','show','update']);
 
+    // Payment
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 });
 
@@ -62,5 +61,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::get('/delivery-pricing-settings', [DeliveryFeeSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
+
+    // Order Management
+    Route::apiResource('orders', AdminOrderController::class)->only(['index']);
+    Route::patch('/orders/{order}/refund',[AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');
+    
 });
 

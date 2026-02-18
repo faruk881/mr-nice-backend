@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Stripe\Refund as StripeRefund;
+use Stripe\Stripe;
+
+class AdminOrderRefundController extends Controller
+{
+    public function update($order_id){
+        
+        // Get the order
+        $order = Order::with('refund')->find($order_id);
+
+        // Check if order exists
+        if(!$order) {
+            return apiError('Order not found', 404);
+        }
+
+        // Get the refund
+        $refund = $order->refund;
+
+        // Check if refund exists
+        if(!$refund) {
+            return apiError('Refund not found', 404);
+        }
+
+        if ($order->is_paid && $order->status == 'cancelled') {
+            
+            // Get the payment
+            $payment = $order->payments()->where('status', 'succeeded')->latest()->first();
+
+            
+            // Check if there is valid payment
+            if (!$payment || !$payment->stripe_payment_intent_id) {
+                return apiError('No valid payment found to refund.', 400);
+            }
+
+            // Refund the payment
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            DB::beginTransaction();
+
+            try {
+                // Create Stripe refund
+                $stripeRefund = StripeRefund::create([
+                    'payment_intent' => $payment->stripe_payment_intent_id,
+                ]);
+
+                // Update payment record
+                $payment->update([
+                    'status' => 'refunded',
+                    'stripe_response' => json_encode($stripeRefund),
+                ]);
+                $refund->update([
+                    'status' => 'succeeded'
+                ]);
+
+                DB::commit();
+
+                return apiSuccess('Order refunded and cancelled successfully.', $order);
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                Log::error('Stripe Refund Failed: ' . $e->getMessage(), [
+                    'order_id' => $order->id,
+                    'payment_intent' => $payment->stripe_payment_intent_id,
+                ]);
+
+                return apiError('Refund failed. Please try again.', 500);
+            }
+        }
+
+        return apiError('Cannot refund this order', 403);
+
+    }
+
+}

@@ -193,7 +193,6 @@ class OrdersController extends Controller
             $order->update([
                 'status' => 'cancelled',
                 'status_reason' => $request->cancel_reason,
-                'is_paid' => false,
             ]);
 
             return apiSuccess('Order cancelled and refund requested.', $order);
