@@ -80,8 +80,8 @@ class PaymentController extends Controller
                         'order_id' => $order->id,
                         'user_id' => $user->id,
                     ],
-                    'success_url' => route('payment.success', ['orderId' => $order->id]),
-                    'cancel_url' => route('payment.cancel', ['orderId' => $order->id]),
+                    'success_url' => config('app.frontend_url'),
+                    'cancel_url' => config('app.frontend_url'),
                 ]);
             }
 

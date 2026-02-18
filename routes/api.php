@@ -64,28 +64,3 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
 });
 
-
-
-
-
-
-
-
-// Only Test Purpose Route
-Route::get('/payment-success/{orderId}', function($orderId) {
-    // Find payment and order
-    $order = \App\Models\Order::findOrFail($orderId);
-    return response()->json([
-        'message' => "Payment successful for order #{$order->id}",
-        'order' => $order
-    ]);
-})->name('payment.success');
-
-Route::get('/payment-cancel/{orderId}', function($orderId) {
-    $order = \App\Models\Order::findOrFail($orderId);
-    return response()->json([
-        'message' => "Payment canceled for order #{$order->id}",
-        'order' => $order
-    ]);
-})->name('payment.cancel');
-
