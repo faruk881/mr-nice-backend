@@ -17,5 +17,5 @@ class Payment extends Model
     {
         return $this->hasOne(Refund::class);
     }
-    }
+    
 }
