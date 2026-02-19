@@ -7,6 +7,7 @@ use App\Http\Requests\Customer\PaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Stripe\PaymentMethod;
 use Stripe\Stripe;
 use Stripe\Customer as StripeCustomer;
 use Stripe\Checkout\Session as StripeSession;
@@ -145,10 +146,18 @@ class PaymentController extends Controller
                 'currency' => 'chf',
             ]);
 
+            // Fetch saved cards
+            $savedCards = PaymentMethod::all([
+                'customer' => $stripeCustomer->id,
+                'type' => 'card',
+            ]);
+            
+
             return apiSuccess('Payment intent created successfully.', [
                 'type' => 'intent',
                 'publishable_key' => config('services.stripe.publishable'),
-                'client_secret' => $paymentIntent->client_secret
+                'client_secret' => $paymentIntent->client_secret,
+                'saved_cards' => $savedCards->data, 
             ]);
         }
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CourierRatingController;
 use App\Http\Controllers\Customer\CustomerCourierController;
+use App\Http\Controllers\Customer\CustomerPaymentMethodsController;
 use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
@@ -53,6 +54,11 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     // Profile
     Route::get('profile', [UserProfileController::class, 'show'])->name('customer.profile.show');
     Route::patch('profile', [UserProfileController::class, 'update'])->name('customer.profile.update');
+
+    // Payment Methods
+    Route::get('payment-methods', [CustomerPaymentMethodsController::class, 'index'])->name('customer.payment-methods.index');
+    Route::post('payment-methods', [CustomerPaymentMethodsController::class, 'store'])->name('customer.payment-methods.store');
+
 
     // Become Courier
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
