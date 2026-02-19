@@ -24,7 +24,7 @@ class OrdersController extends Controller
         $perPage = $request->query('per_page', 10);
         $status = $request->query('status', 'all');
 
-        $query = Order::query();
+        $query = Order::with('refund');
 
         switch ($status) {
             case 'active':
@@ -149,7 +149,7 @@ class OrdersController extends Controller
     public function show(string $id)
     {
         // Get the order
-        $order = Order::with(['courier','courier.courierProfile', 'payments'])->find($id);
+        $order = Order::with(['courier','courier.courierProfile', 'payments','refund'])->find($id);
 
         // Check if order exists
         if (!$order) {

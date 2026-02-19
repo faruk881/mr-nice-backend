@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CustomerCourierController;
 use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
@@ -53,6 +54,9 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
 
     // Payment
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
+
+    // Contact Message
+    Route::apiResource('/contact-message',ContactMessageController::class)->only('store')->middleware('throttle:5,1');
 });
 
 // Admin Routes
