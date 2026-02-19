@@ -72,5 +72,23 @@ class User extends Authenticatable
         return $this->hasOne(CourierProfile::class);
     }
 
+    // Ratings **given by this user** (if customer)
+    public function ratingsGiven()
+    {
+        return $this->hasMany(CourierRating::class, 'customer_id');
+    }
+
+    // Ratings **received by this user** (if courier)
+    public function ratingsReceived()
+    {
+        return $this->hasMany(CourierRating::class, 'courier_id');
+    }
+
+    // Average rating for courier
+    public function averageRating()
+    {
+        return $this->ratingsReceived()->avg('rating');
+    }
+
 
 }

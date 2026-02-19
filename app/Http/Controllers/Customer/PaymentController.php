@@ -19,6 +19,11 @@ class PaymentController extends Controller
         // Fetch the order with the related user
         $order = Order::with('user')->findOrFail($orderId);
         $user = $order->user;
+        
+        // Check if order is belongs to that user.
+        if($order->customer_id !== auth()->id()) {
+            return apiError('You are not authorized to update this order', 403);
+        }
 
         // Prevent payment if already paid
         if ($order->is_paid) {
@@ -78,7 +83,7 @@ class PaymentController extends Controller
                     'mode' => 'payment',
                     'metadata' => [
                         'order_id' => $order->id,
-                        'user_id' => $user->id,
+                        'customer_id' => $user->id,
                     ],
                     'success_url' => config('app.frontend_url'),
                     'cancel_url' => config('app.frontend_url'),
@@ -128,7 +133,7 @@ class PaymentController extends Controller
                     'payment_method_types' => ['card', 'twint'],
                     'metadata' => [
                         'order_id' => $order->id,
-                        'user_id' => $user->id,
+                        'customer_id' => $user->id,
                     ],
                 ]);
             }

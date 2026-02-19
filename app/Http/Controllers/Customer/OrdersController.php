@@ -94,7 +94,7 @@ class OrdersController extends Controller
 
             // Create order
             $order = Order::create([
-                'user_id'          => auth()->id(),
+                'customer_id'      => auth()->id(),
                 'order_number'     => strtoupper(Str::random(10)), // unique order number
                 'pickup_address'   => $pickup_address,
                 'pickup_lat'       => $pickup_lat,
@@ -169,6 +169,10 @@ class OrdersController extends Controller
         // Check if order exists
         if(!$order) {
             return apiError('Order not found', 404);
+        }
+
+        if($order->customer_id !== auth()->id()) {
+            return apiError('You are not authorized to update this order', 403);
         }
 
         // Cancel if order status is only pending_payment and pending

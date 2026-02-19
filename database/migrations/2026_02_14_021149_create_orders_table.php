@@ -15,7 +15,7 @@ return new class extends Migration
             
             // Primary
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('courier_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('order_number')->unique();
 
