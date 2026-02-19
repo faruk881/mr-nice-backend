@@ -15,6 +15,7 @@ use App\Http\Controllers\Customer\CustomerCourierController;
 use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
+use App\Http\Controllers\Profile\UserProfileController;
 use App\Http\Controllers\Stripe\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,6 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Customer Routes
 Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
+
+    // Profile
+    Route::get('profile', [UserProfileController::class, 'show'])->name('customer.profile.show');
+    Route::patch('profile', [UserProfileController::class, 'update'])->name('customer.profile.update');
+
+    // Become Courier
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
     
     // Orders
