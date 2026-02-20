@@ -21,11 +21,8 @@ use App\Http\Controllers\Stripe\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 
-// Webhooks
+// Stripe Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
-
-// Public Order Price Estimation
-Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
 
 // Auth Routes
 Route::prefix('auth')->group(function () {
@@ -50,6 +47,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Customer Routes
 Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
+
+    // Order Price Estimation
+    Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
 
     // Profile
     Route::get('profile', [UserProfileController::class, 'show'])->name('customer.profile.show');

@@ -59,12 +59,12 @@ class OrderPriceController extends Controller
                 'per_km_price' => $pricePerKm,
                 'total_distance' => $distance,
                 'package_size' => $packageSize,
-                'service_fee' => $packagePrice,
+                'package_fee' => $packagePrice,
                 'total_fee' => $totalPrice,
             ];
 
             // Return with data
-            return apiSuccess('Delivery price calculated successfully', $data);
+            return apiSuccess('Delivery fee calculated successfully', $data);
 
          
 
@@ -84,8 +84,8 @@ class OrderPriceController extends Controller
             // ]);
 
             return apiSuccess('The fee is: ',$request->validated());
-        } catch (\Exception $e) {
-            return apiError($e->getMessage());
+        } catch (\Throwable $e) {
+            return apiError($e->getMessage(), $e->getCode(),['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         }
 
 

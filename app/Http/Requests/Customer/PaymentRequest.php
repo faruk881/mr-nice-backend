@@ -22,7 +22,7 @@ class PaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_mode' => 'required|in:intent,link'
+            'payment_mode' => 'required|in:intent'
         ];
     }
     public function messages(): array
