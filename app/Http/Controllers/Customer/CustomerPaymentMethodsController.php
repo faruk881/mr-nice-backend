@@ -42,7 +42,7 @@ class CustomerPaymentMethodsController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            return apiError($e->getMessage(), $e->getCode(),['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            throw $e;
         }
     }
 

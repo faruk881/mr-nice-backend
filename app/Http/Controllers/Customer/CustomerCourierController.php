@@ -52,7 +52,7 @@ class CustomerCourierController extends Controller
             // Retuen message
             return apiSuccess('Courier application submitted successfully. Await admin approval.', $profile);
         } catch (\Throwable $e) {
-            return apiError($e->getMessage());
+            throw $e;
         }
     }
 }
