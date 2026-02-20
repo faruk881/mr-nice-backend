@@ -19,10 +19,16 @@ class RegisterController extends Controller
             DB::beginTransaction();
 
             // Get the validated Fields
-            $fields = $request->validated();
+            $userFields = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'type' => $request->type,
+                'password' => $request->password,
+            ];
             
             // Create the user
-            $user = User::create($fields);
+            $user = User::create($userFields);
 
             // Get the role name
             $role = $request->type;
@@ -39,6 +45,25 @@ class RegisterController extends Controller
             // Assign user role
             $user->roles()->attach($userRole->id);
 
+            $data['user'] = new AuthUserResource($user);
+
+            if($role == 'courier') {
+
+                // Handle ID document upload
+                $path = $request->file('id_document')->store('courier/id_documents', 'public');
+
+                // Create courier profile
+                $profile = $user->courierProfile()->create([
+                    'city' => $request->city,
+                    'vehicle_type' => $request->vehicle_type,
+                    'package_size' => $request->package_size,
+                    'id_document' => $path,
+                    'document_status' => 'pending',
+                ]);
+                $data['courier_profile'] = $profile;
+
+            }
+
             // Send the email otp
             $otpResult = $otpService->sendEmailOtp($user,'register');
 
@@ -53,14 +78,12 @@ class RegisterController extends Controller
             DB::commit();
 
             // Return the success message
-            return apiSuccess(
-                'User registered successfully. A verification code has been sent to your email address.',
-                new AuthUserResource($user)
-            );
-
-        } catch( \Throwable $e) {
+            return apiSuccess('User registered successfully. A verification code has been emailed.',$data);
+        } catch (\Throwable $e) {
+            // Rollback the database
             DB::rollBack();
-            return apiError('Registration failed. Please try again later. | '.$e->getMessage().' | '.$e->getLine(), 500);
+            // Rethrow the exception to be handled by the global exception handler
+            throw $e;
         }
     }
 }

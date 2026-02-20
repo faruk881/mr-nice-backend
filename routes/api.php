@@ -12,6 +12,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Courier\CourierOrderController;
+use App\Http\Controllers\CourierVerificationController;
 use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CourierRatingController;
 use App\Http\Controllers\Customer\CustomerCourierController;
@@ -49,7 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Customer Routes
-Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(function () {
+Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')->group(function () {
 
     // Order Price Estimation
     Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
@@ -67,8 +69,8 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
     
     // Orders
-    Route::post('orders', [OrdersController::class, 'store'])->middleware('throttle:5,1');
-    Route::apiResource('orders', OrdersController::class)->only(['index','show','update']);
+    Route::post('/orders', [OrdersController::class, 'store'])->middleware('throttle:5,1');
+    Route::apiResource('/orders', OrdersController::class)->only(['index','show','update']);
 
     // Payment
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
@@ -85,6 +87,20 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
 });
 
+// Courier Routes
+Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->group(function () {
+
+    // Orders Routes
+    Route::get('orders', [CourierOrderController::class, 'index'])->name('courier.orders.index');
+
+    // check if the documents verified.
+    Route::middleware('courier.status:verified')->group(function () {
+        Route::patch('orders/{order}/accept', [CourierOrderController::class, 'accept'])->name('courier.orders.accept');
+        Route::patch('orders/{order}/pickup', [CourierOrderController::class, 'pickup'])->name('courier.orders.pickup');
+        Route::patch('orders/{order}/deliver', [CourierOrderController::class, 'deliver'])->name('courier.orders.deliver');
+    });
+});
+
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Get and Update Pricing Settings
@@ -92,6 +108,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
 
+    // Courier id verification
+    Route::patch('/couriers/{courier}/verification', [CourierVerificationController::class, 'update'])->name('admin.couriers.verification.update');
+    
     // Order Management
     Route::apiResource('orders', AdminOrderController::class)->only(['index']);
     Route::patch('/orders/{order}/refund',[AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');

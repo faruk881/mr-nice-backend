@@ -60,46 +60,42 @@ class EmailVerificationController extends Controller
 
     public function resend(OtpResentRequest $request, OtpService $otpService)
     {
-        try {
+        // Get the user
+        $user = User::where('email', $request->email)->first();
 
-            // Get the user
-            $user = User::where('email', $request->email)->first();
-
-            // Generic error (prevents enumeration)
-            if (! $user) {
-                return apiError('Invalid credentials.', 401);
-            }
-
-            // Already verified
-            if ($user->email_verified_at) {
-                return apiError('This email address has already been verified.',409);
-            }
-
-            // Account inactive
-            if ($user->status !== 'active') {
-                return apiError('Your account is not active.', 403);
-            }
-
-            // OTP expired or not generated yet → resend
-            if (! $user->otp_expires_at || now()->gt($user->otp_expires_at)) {
-
-                // Send the email otp
-                $otpResult = $otpService->sendEmailOtp($user);
-
-                // Check if there is error sending otp
-                if (!$otpResult['success']) {
-
-                    return apiError('Unable to send verification code. Please try again later.',500);
-                }
-
-                return apiSuccess('A verification code has been sent to your email.',null,200);
-            }
-
-            // OTP still valid → block resend
-            return apiError('A verification code was already sent. Please try again after it expires.',429);
-
-        } catch (\Throwable $e) {
-            return apiError('Something went wrong.', 500);
+        // Generic error (prevents enumeration)
+        if (! $user) {
+            return apiError('Invalid credentials.', 401);
         }
+
+        // Already verified
+        if ($user->email_verified_at) {
+            return apiError('This email address has already been verified.',409);
+        }
+
+        // Account inactive
+        if ($user->status !== 'active') {
+            return apiError('Your account is not active.', 403);
+        }
+
+        // OTP expired or not generated yet → resend
+        if (! $user->otp_expires_at || now()->gt($user->otp_expires_at)) {
+
+            // Send the email otp
+            $otpResult = $otpService->sendEmailOtp($user,'register');
+
+            // Check if there is error sending otp
+            if (!$otpResult['success']) {
+
+                return apiError('Unable to send verification code. Please try again later.',500);
+            }
+
+            return apiSuccess('A verification code has been sent to your email.',null,200);
+        }
+
+        // OTP still valid → block resend
+        return apiError('A verification code was already sent. Please try again after it expires.',429);
+
+
     }
 }

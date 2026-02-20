@@ -16,7 +16,7 @@ class CustomerCourierController extends Controller
             // Get logged in user.
             $user = auth()->user();
 
-            // Get the user profile if exists.
+            // Get the users profile if exists.
             $profile = $user->courierProfile;
 
             // If profile exist messages.

@@ -20,7 +20,15 @@ class AuthUserResource extends JsonResource
             'email'    => $this->email,
             'phone'    => $this->phone,
             'status'   => $this->status,
-            'verified' => !is_null($this->email_verified_at),
+            'courier_profile' => $this->whenLoaded('courierProfile', function() {
+                return [
+                    'city' => $this->courierProfile->city,
+                    'vehicle_type' => $this->courierProfile->vehicle_type,
+                    'package_size' => $this->courierProfile->package_size,
+                    'document_status' => $this->courierProfile->document_status,
+                ];
+            }),
+            'roles'    => $this->roles->pluck('name'),
         ];
     }
 }

@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\CheckCourierDocument;
 use App\Http\Middleware\CheckUserType;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\StatusMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'status' => StatusMiddleware::class,
+            'courier.status' => CheckCourierDocument::class,
         ]);
     })
     // ->withExceptions(function (Exceptions $exceptions): void {
