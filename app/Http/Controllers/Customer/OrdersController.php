@@ -21,30 +21,35 @@ class OrdersController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = $request->query('per_page', 10);
-        $status = $request->query('status', 'all');
+        try {
+            $perPage = $request->query('per_page', 10);
+            $status = $request->query('status', 'all');
 
-        $query = Order::with('refund');
+            $query = auth()->user()->orders()
+                ->with('refund')
+                ->where('customer_id', auth()->id());
+            switch ($status) {
+                case 'active':
+                    $query->where('status', 'pending');
+                    break;
+                case 'completed':
+                    $query->where('status', 'delivered');
+                    break;
+                case 'cancelled':
+                    $query->where('status', 'cancelled');
+                    break;
+                case 'all':
+                default:
+                    // no filtering
+                    break;
+            }
 
-        switch ($status) {
-            case 'active':
-                $query->where('status', 'pending');
-                break;
-            case 'completed':
-                $query->where('status', 'delivered');
-                break;
-            case 'cancelled':
-                $query->where('status', 'cancelled');
-                break;
-            case 'all':
-            default:
-                // no filtering
-                break;
+            $orders = $query->paginate($perPage);
+
+            return apiSuccess('Orders loaded', $orders);
+        } catch (\Throwable $e) {
+            return apiError($e->getMessage(),500,['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         }
-
-        $orders = $query->paginate($perPage);
-
-        return apiSuccess('Orders loaded', $orders);
     }
 
     /**
@@ -69,6 +74,7 @@ class OrdersController extends Controller
             $package_items    = $validated['items'];
             $package_size     = $validated['package_size'];
             $additional_notes = $validated['additional_notes'] ?? null;
+            $booking_date     = $validated['booking_date'];
             
             // Get the distance using lon and lat using google api
             $distance = 5;
@@ -113,7 +119,7 @@ class OrdersController extends Controller
                 'package_fee'      => $packagePrice,
                 'total_fee'        => $totalFee,
                 'status'           => 'pending_payment',
-                'booking_date'     => now(), // can be customized
+                'booking_date'     => $booking_date
             ]);
 
             // Generate and save order id
@@ -139,7 +145,7 @@ class OrdersController extends Controller
             return apiSuccess('Delivery request created successfully!', $data, 201);
             
         } catch (\Throwable $e) {
-            return apiError($e->getMessage());
+            return apiError($e->getMessage(),500,['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         }
     }
 
@@ -148,14 +154,29 @@ class OrdersController extends Controller
      */
     public function show(string $id)
     {
-        // Get the order
-        $order = Order::with(['courier','courier.courierProfile', 'payments','refund'])->find($id);
+        try {
 
-        // Check if order exists
-        if (!$order) {
-            return apiError('Order not found', 404);
+            // Get the order
+            $order = auth()->user()->orders()
+                ->with([
+                    'courier' => function($query) {
+                        // This adds a 'ratings_received_avg_rating' field to the courier object
+                        $query->withAvg('ratingsReceived', 'rating'); 
+                    }, 
+                    'courier.courierProfile', 
+                    'payments', 
+                    'refund'
+                ])
+                ->find($id);
+
+            // Check if order exists
+            if (!$order) {
+                return apiError('Order not found', 404);
+            }
+            return apiSuccess('Order loaded',$order);
+        } catch (\Throwable $e) {
+            return apiError($e->getMessage(),500,['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         }
-        return apiSuccess('Order loaded',$order);
     }
 
     /**

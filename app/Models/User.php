@@ -57,7 +57,7 @@ class User extends Authenticatable
     public function orders()
     {
         // Orders created by this user (customer)
-        return $this->hasMany(Order::class, 'user_id');
+        return $this->hasMany(Order::class, 'customer_id');
     }
 
     public function assignedOrders()
@@ -82,12 +82,6 @@ class User extends Authenticatable
     public function ratingsReceived()
     {
         return $this->hasMany(CourierRating::class, 'courier_id');
-    }
-
-    // Average rating for courier
-    public function averageRating()
-    {
-        return $this->ratingsReceived()->avg('rating');
     }
 
 

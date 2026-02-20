@@ -64,7 +64,8 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
     
     // Orders
-    Route::apiResource('orders', OrdersController::class)->only(['index','store','show','update']);
+    Route::post('orders', [OrdersController::class, 'store'])->middleware('throttle:5,1');
+    Route::apiResource('orders', OrdersController::class)->only(['index','show','update']);
 
     // Payment
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');

@@ -33,6 +33,7 @@ class DeliveryRequestRequest extends FormRequest
             'items'              => 'required|string|max:1000',
             'package_size'       => 'required|in:small,medium,large',
             'additional_notes'   => 'nullable|string|max:500',
+            'booking_date'       => 'required|date|after_or_equal:'.now()->startOfDay()->toDateTimeString(),
         ];
     }
 
@@ -78,6 +79,10 @@ class DeliveryRequestRequest extends FormRequest
             
             'additional_notes.string'   => 'Additional notes must be valid text.',
             'additional_notes.max'      => 'Additional notes cannot exceed 500 characters.',
+
+            'booking_date.required'     => 'Booking date is required.',
+            'booking_date.datetime'     => 'Booking date must be a valid date and time.',
+            'booking_date.after_or_equal' => 'Booking date must be after or equal to the current date and time.',
         ];
     }
 }
