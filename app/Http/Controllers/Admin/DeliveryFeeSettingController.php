@@ -9,22 +9,18 @@ use App\Models\DeliveryFeeSetting;
 
 class DeliveryFeeSettingController extends Controller
 {
-    public function index(){
-        try {
+    public function index() {
 
-            // Get the first (and only) pricing row
-            $prices = DeliveryFeeSetting::first();
+        // Get the first (and only) pricing row
+        $prices = DeliveryFeeSetting::first();
 
-            // Check if data exists
-            if (!$prices) {
-                return apiError('Delivery pricing settings not found', 404);
-            }
-
-            // Return
-            return apiSuccess('Delivery Pricing Settings', $prices);
-        } catch (\Throwable $e) {
-            return apiError($e->getMessage().' | '.$e->getLine());
+        // Check if data exists
+        if (!$prices) {
+            return apiError('Delivery pricing settings not found', 404);
         }
+
+        // Return
+        return apiSuccess('Delivery Pricing Settings', $prices);
     }
 
     public function updateDistanceFee(UpdateDistanceFeeRequest $request){
@@ -51,7 +47,7 @@ class DeliveryFeeSettingController extends Controller
             // Return
             return apiSuccess('Distance pricing updated successfully', $prices);
         }catch(\Throwable $e){
-            return apiError($e->getMessage().' | '.$e->getLine());
+            throw $e;
         }
 
     }
@@ -85,7 +81,7 @@ class DeliveryFeeSettingController extends Controller
             // Return
             return apiSuccess('Distance fees updated successfully', $prices);
         } catch(\Throwable $e) {
-            return apiError($e->getMessage().' | '.$e->getLine());
+            throw $e;
         }
         
     }

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminFaqController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminOrderRefundController;
+use App\Http\Controllers\Admin\AdminPrivacyController;
+use App\Http\Controllers\Admin\AdminTermsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -75,6 +78,11 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'])->group(f
 
     // Rate Courier
     Route::apiResource('/courier-ratings', CourierRatingController::class)->only('store');
+
+    // Get FAQs, Terms, Privacy Policy
+    Route::get('/faqs', [AdminFaqController::class, 'index'])->name('customer.faqs.index');
+    Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.terms.show');
+    Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
 });
 
 // Admin Routes
@@ -87,6 +95,17 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     // Order Management
     Route::apiResource('orders', AdminOrderController::class)->only(['index']);
     Route::patch('/orders/{order}/refund',[AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');
+
+    // Terms
+    Route::get('terms', [AdminTermsController::class, 'show'])->name('admin.terms.show');
+    Route::patch('terms', [AdminTermsController::class, 'update'])->name('admin.terms.update');
+
+    // Privacy Policy
+    Route::get('privacy-policy', [AdminPrivacyController::class, 'show'])->name('admin.privacy.show');
+    Route::patch('privacy-policy', [AdminPrivacyController::class, 'update'])->name('admin.privacy.update');
+
+    // FAQs
+    Route::apiResource('faqs', AdminFaqController::class);
     
 });
 
