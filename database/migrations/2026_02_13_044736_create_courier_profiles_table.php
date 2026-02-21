@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('vehicle_type',['bicycle','car','motorbike','cargo-van']);
             $table->enum('package_size',['small','medium','large'])->nullable();
             $table->string('id_document'); // Document path
-            $table->enum('document_status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('document_status', ['pending', 'verified', 'rejected'])->default('pending');
             $table->string('document_reject_reason')->nullable();
             $table->timestamps();
         });

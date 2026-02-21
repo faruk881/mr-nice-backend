@@ -16,14 +16,11 @@ class CheckCourierDocument
     public function handle(Request $request, Closure $next, string $status): Response
     {
         // Laravel automatically resolves the {document} ID into a Model instance
-        $document = $request->route('document');
+        $document = $request->user()->courierProfile()->first();
 
-        if (!$document || $document->status !== $status) {
-            return response()->json([
-                'success' => false,
-                'message' => "This action requires the document to be: " . ucfirst($status),
-                'current_status' => $document?->status
-            ], 403);
+        if (!$document || $document->document_status !== $status) {
+
+            return apiError('Unauthorized. Documents not ' . $status,403, ['document_status' => $document->document_status]);
         }
         return $next($request);
     }
