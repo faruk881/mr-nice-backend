@@ -29,7 +29,7 @@ class Order extends Model
         'booking_date'    => 'datetime',
     ];
 
-    public function user() {
+    public function customer() {
         return $this->belongsTo(User::class, 'customer_id');
     }
 

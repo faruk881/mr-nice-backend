@@ -44,7 +44,7 @@ class CourierOrderController extends Controller
 
     public function show($orderId) {
         // Show order details
-        $order = Order::where('id', $orderId)->where('status', 'pending')->first();
+        $order = Order::where('id', $orderId)->where('status', 'pending')->with('customer:id,name,phone,profile_photo')->first();
 
         // Check if order exists and is pending
         if (!$order) {
