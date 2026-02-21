@@ -42,8 +42,36 @@ class CourierOrderController extends Controller
         return apiSuccess('Pending orders retrieved successfully', $orders);
     }
 
+    public function show($orderId) {
+        // Show order details
+        $order = Order::where('id', $orderId)->where('status', 'pending')->first();
+
+        // Check if order exists and is pending
+        if (!$order) {
+            return apiError('Order not found or already accepted.', 404);
+        }
+
+        // Return response
+        return apiSuccess('Order details retrieved successfully.', $order);
+    }
+
     public function accept($orderId) {
-        // Accept an order
+        // Accept the order
+        $order = Order::where('id', $orderId)->where('status', 'pending')->first();
+
+        // Check if order exists and is pending
+        if (!$order) {
+            return apiError('Order not found or already accepted.', 404);
+        }
+
+        // Update the order
+        $order->update([
+            'courier_id' => auth()->id(),
+            'status' => 'accepted',
+        ]);
+
+        // Return response
+        return apiSuccess('Order accepted successfully.', $order);
     }
 
     public function pickup($orderId) {

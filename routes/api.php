@@ -95,6 +95,7 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
     // check if the documents verified.
     Route::middleware('courier.status:verified')->group(function () {
+        Route::get('orders/{order}', [CourierOrderController::class, 'show'])->name('courier.orders.show');
         Route::patch('orders/{order}/accept', [CourierOrderController::class, 'accept'])->name('courier.orders.accept');
         Route::patch('orders/{order}/pickup', [CourierOrderController::class, 'pickup'])->name('courier.orders.pickup');
         Route::patch('orders/{order}/deliver', [CourierOrderController::class, 'deliver'])->name('courier.orders.deliver');
