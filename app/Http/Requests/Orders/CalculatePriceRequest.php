@@ -22,10 +22,18 @@ class CalculatePriceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'package_size' => 'required|in:small,medium,large',
-            'pickup_address' => 'required',
-            'delivery_address' => 'required',
-            'items' => 'required'
+            'pickup_address'     => 'required|string|max:255',
+            'pickup_notes'       => 'nullable|string|max:500',
+            'pickup_lat'         => 'required|numeric|between:-90,90',
+            'pickup_lon'         => 'required|numeric|between:-180,180',
+            'delivery_address'   => 'required|string|max:255',
+            'delivery_lat'       => 'required|numeric|between:-90,90',
+            'delivery_lon'       => 'required|numeric|between:-180,180',
+            'delivery_notes'     => 'nullable|string|max:500',
+            'items'              => 'required|string|max:1000',
+            'package_size'       => 'required|in:small,medium,large',
+            'additional_notes'   => 'nullable|string|max:500',
+            'booking_date'       => 'required|date|after_or_equal:'.now()->startOfDay()->toDateTimeString(),
         ];
     }
 }

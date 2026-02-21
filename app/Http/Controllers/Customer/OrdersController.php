@@ -8,6 +8,7 @@ use App\Http\Requests\Customer\Order\OrderCancelRequest;
 use App\Models\DeliveryFeeSetting;
 use App\Models\Order;
 use App\Models\Refund;
+use App\Services\DistanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +52,7 @@ class OrdersController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(DeliveryRequestRequest $request)
+    public function store(DeliveryRequestRequest $request, DistanceService $distanceService)
     {       
         // Validate request
         $validated = $request->validated();
@@ -71,7 +72,13 @@ class OrdersController extends Controller
         $booking_date     = $validated['booking_date'];
         
         // Get the distance using lon and lat using google api
-        $distance = 5;
+        $distanceService = $distanceService->distanceMeasure('haversine',$pickup_lat,$pickup_long,$delivery_lat,$delivery_long);
+
+        // Get the distance
+        $distance = $distanceService['distance_km'];
+        
+        // Get the time            
+        $time = $distanceService['minutes'];
         
         // Get Delivery pricing settings
         $prices = DeliveryFeeSetting::first();
