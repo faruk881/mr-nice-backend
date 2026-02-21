@@ -22,14 +22,14 @@ class CourierVerificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:approved,rejected',
+            'status' => 'required|in:verified,rejected',
             'rejection_reason' => 'required_if:status,rejected|string|max:255',
         ];
     }
     public function messages(): array
     {
         return [
-            'status.required' => 'Please select a verification status (approved or rejected).',
+            'status.required' => 'Please select a verification status (verified or rejected).',
             'status.in' => 'The verification status must be either "approved" or "rejected".',
             'rejection_reason.required_if' => 'Please provide a reason for rejection when rejecting a courier application.',
             'rejection_reason.string' => 'The rejection reason must be a valid string.',
