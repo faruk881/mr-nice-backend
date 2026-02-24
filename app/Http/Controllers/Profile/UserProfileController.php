@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Resources\UserProfileViewResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserProfileController extends Controller
 {
@@ -19,7 +22,7 @@ class UserProfileController extends Controller
             return apiSuccess('Profile loaded', $user);
             
         } catch (\Throwable $e) {
-            return apiError($e->getMessage(), $e->getCode(),['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            throw $e;
         }
     }
 
@@ -32,11 +35,13 @@ class UserProfileController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display view profile for edit. for both Courier and Customer
      */
-    public function show(string $id)
+    public function show()
     {
-        //
+        $user = auth()->user()->load('courierProfile');
+
+        return apiSuccess('Profile loaded', new UserProfileViewResource($user));
     }
 
     /**
@@ -44,44 +49,60 @@ class UserProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request)
     {
+        $user = auth()->user();
+        $data = $request->validated();
+
+        DB::beginTransaction();
+
         try {
-            // Get the user
-            $user = auth()->user();
 
-            // Get the input data
-            $data = $request->validated();
-        
-            // Update the name if exists
-            if(isset($data['name'])){
-                $user->name = $data['name'];
-            }
+            // Update user details
+            $user->fill([
+                'name'  => $data['name']  ?? $user->name,
+                'phone' => $data['phone'] ?? $user->phone,
+            ]);
 
-            // Update the phone if exists
-            if(isset($data['phone'])){
-                $user->phone = $data['phone'];
-            }
 
-            // Update the profile photo
-            if(isset($data['profile_photo'])){
+            // Update profile photo
+            if (isset($data['profile_photo'])) {
 
-                // Delete old profile photo if exists
+                // Delete old photo
                 if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
                     Storage::disk('public')->delete($user->profile_photo);
                 }
 
-                // Store new photo
-                $path = $data['profile_photo']->store('/images/profile','public');
+                $file = $data['profile_photo'];
 
-                // Save new path
+                $filename = 'profile_'.$user->id.'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+
+                $path = $file->storeAs('images/profile', $filename, 'public');
+
                 $user->profile_photo = $path;
-            }   
+            }
 
-            // Update the user
-            $user->save(); 
+            // save information
+            $user->save();
 
+            // Save vehicle type if courier
+            if (isset($data['vehicle_type']) && $user->courierProfile ) {
+                $user->courierProfile->update([
+                    'vehicle_type' => $data['vehicle_type']
+                ]);
+            }
+
+
+            // Commit transaction
+            DB::commit();
+
+            // Return success message
             return apiSuccess('Profile updated successfully.', $user);
+
         } catch (\Throwable $e) {
-            return apiError($e->getMessage(), $e->getCode(),['debug_message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
+            // Rollback transaction
+            DB::rollBack();
+
+            throw $e;
         }
     }
 

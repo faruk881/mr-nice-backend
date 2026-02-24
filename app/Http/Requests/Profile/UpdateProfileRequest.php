@@ -34,6 +34,7 @@ class UpdateProfileRequest extends FormRequest
                 'min:10',
                 Rule::unique('users', 'phone')->ignore(auth()->id()),
             ],
+            'vehicle_type' => 'nullable|string|in:bicycle,car,motorbike,cargo-van',
         ];
     }
 
