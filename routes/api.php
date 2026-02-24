@@ -49,6 +49,10 @@ Route::prefix('auth')->group(function () {
 // Profile Group
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile/password', [PasswordUpdateController::class, 'update']);
+    
+    // Profile
+    Route::get('/profile', [UserProfileController::class, 'show'])->name('customer.profile.show');
+    Route::patch('/profile', [UserProfileController::class, 'update'])->name('customer.profile.update');
 });
 
 // Customer Routes
@@ -57,9 +61,7 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     // Order Price Estimation
     Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
 
-    // Profile
-    Route::get('profile', [UserProfileController::class, 'show'])->name('customer.profile.show');
-    Route::patch('profile', [UserProfileController::class, 'update'])->name('customer.profile.update');
+
 
     // Payment Methods
     Route::get('payment-methods', [CustomerPaymentMethodsController::class, 'index'])->name('customer.payment-methods.index');
@@ -96,10 +98,6 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
     // check if the documents verified.
     Route::middleware('courier.status:verified')->group(function () {
-
-        // Profile
-        Route::get('profile', [UserProfileController::class, 'show'])->name('courier.profile.show');
-        Route::patch('profile', [UserProfileController::class, 'update'])->name('courier.profile.update');
 
         // Orders
         Route::get('/orders/{order}', [CourierOrderController::class, 'show'])->name('courier.orders.show');
