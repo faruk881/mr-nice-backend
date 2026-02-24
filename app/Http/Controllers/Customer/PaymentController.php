@@ -18,8 +18,8 @@ class PaymentController extends Controller
     public function store(PaymentRequest $request, $orderId)
     {
         // Fetch the order with the related user
-        $order = Order::with('user')->findOrFail($orderId);
-        $user = $order->user;
+        $order = Order::with('customer')->findOrFail($orderId);
+        $user = $order->customer;
         
         // Check if order is belongs to that user.
         if($order->customer_id !== auth()->id()) {
