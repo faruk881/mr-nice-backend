@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Courier\CourierDeliveryController;
 use App\Http\Controllers\Courier\CourierOrderController;
 use App\Http\Controllers\CourierVerificationController;
 use App\Http\Controllers\Customer\ContactMessageController;
@@ -95,10 +96,13 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
     // check if the documents verified.
     Route::middleware('courier.status:verified')->group(function () {
-        Route::get('orders/{order}', [CourierOrderController::class, 'show'])->name('courier.orders.show');
-        Route::patch('orders/{order}/accept', [CourierOrderController::class, 'accept'])->name('courier.orders.accept');
-        Route::patch('orders/{order}/pickup', [CourierOrderController::class, 'pickup'])->name('courier.orders.pickup');
-        Route::patch('orders/{order}/deliver', [CourierOrderController::class, 'deliver'])->name('courier.orders.deliver');
+        Route::get('/orders/{order}', [CourierOrderController::class, 'show'])->name('courier.orders.show');
+        Route::patch('/orders/{order}/accept', [CourierOrderController::class, 'accept'])->name('courier.orders.accept');
+        Route::get('/deliveries',[CourierDeliveryController::class, 'index'])->name('courier.deliveries.index');
+        Route::get('/deliveries/{id}',[CourierDeliveryController::class, 'show'])->name('courier.deliveries.show');
+        Route::patch('/deliveries/{id}/pickup', [CourierDeliveryController::class, 'pickup'])->name('courier.orders.pickup');
+        Route::patch('/deliveries/{id}/deliver', [CourierDeliveryController::class, 'deliver'])->name('courier.orders.deliver');
+
     });
 });
 

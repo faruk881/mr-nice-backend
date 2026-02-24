@@ -73,12 +73,4 @@ class CourierOrderController extends Controller
         // Return response
         return apiSuccess('Order accepted successfully.', $order);
     }
-
-    public function pickup($orderId) {
-        // Mark order as picked up
-    }
-
-    public function deliver($orderId) {
-        // Mark order as delivered
-    }
 }
