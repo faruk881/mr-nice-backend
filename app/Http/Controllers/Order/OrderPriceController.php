@@ -20,18 +20,18 @@ class OrderPriceController extends Controller
      * @param DistanceService $distanceService The service we documented previously
      * @return JsonResponse
      */
-    public function estimate(DeliveryRequestRequest $request, DistanceService $distanceService): JsonResponse
+    public function estimate(DeliveryRequestRequest $request, DistanceService $distance_service): JsonResponse
     {
         // 1. Determine Departure Time
         // We default to 9:00 AM of the booking date or today to avoid midnight traffic anomalies
-        $departureTime = $request->booking_date 
+        $departure_time = $request->booking_date 
             ? Carbon::parse($request->booking_date)->setTime(9, 0)->toIso8601String()
             : Carbon::now()->setTime(9, 0)->toIso8601String();
 
         // 2. Calculate Distance via Service
-        $measurement = $distanceService->distanceMeasure(
+        $measurement = $distance_service->distanceMeasure(
             'google', // google or haversine - we recommend Google for better accuracy in pricing
-            $departureTime,
+            $departure_time,
             (float) $request->pickup_lat,
             (float) $request->pickup_lon,
             (float) $request->delivery_lat,
@@ -43,8 +43,8 @@ class OrderPriceController extends Controller
         }
 
         // IMPORTANT: Use camelCase keys to match the DistanceService output
-        $distance = $measurement['distanceKm'];
-        $duration = $measurement['durationMinutes'];
+        $distance = $measurement['distance_km'];
+        $duration = $measurement['duration_minutes'];
 
         // 3. Retrieve Pricing Configuration
         $settings = DeliveryFeeSetting::first();
@@ -54,24 +54,24 @@ class OrderPriceController extends Controller
         }
 
         // 4. Extract Rates
-        $baseFare    = (float) $settings->base_fare;
-        $pricePerKm  = (float) $settings->per_km_fee;
-        $packageSize = $request->package_size; // e.g., 'small', 'medium', 'large'
+        $base_fare    = (float) $settings->base_fare;
+        $price_per_km  = (float) $settings->per_km_fee;
+        $package_size = $request->package_size; // e.g., 'small', 'medium', 'large'
 
         // Map package size to the corresponding fee from settings
-        $packageFees = [
+        $package_fees = [
             'small'  => (float) $settings->small_package_fee,
             'medium' => (float) $settings->medium_package_fee,
             'large'  => (float) $settings->large_package_fee,
         ];
 
-        $packageFee = $packageFees[$packageSize] ?? 0;
+        $package_fee = $package_fees[$package_size] ?? 0;
 
         // 5. Apply Pricing Formula
         // Formula: (Distance * Rate) + Package Fee. 
         // If the result is lower than the Base Fare, use the Base Fare.
-        $calculatedTotal = ($distance * $pricePerKm) + $packageFee;
-        $finalPrice = round(max($calculatedTotal, $baseFare), 2);
+        $calculated_total = ($distance * $price_per_km) + $package_fee;
+        $final_price = round(max($calculated_total, $base_fare), 2);
 
         // 6. Response Construction
         
@@ -79,11 +79,11 @@ class OrderPriceController extends Controller
             'items'            => $request->items,
             'distance'         => $distance,
             'est_time_minutes' => $duration,
-            'base_fare'        => $baseFare,
-            'per_km_fee'       => $pricePerKm,
-            'package_size'     => $packageSize,
-            'package_fee'      => $packageFee,
-            'total_fee'        => $finalPrice,
+            'base_fare'        => $base_fare,
+            'per_km_fee'       => $price_per_km,
+            'package_size'     => $package_size,
+            'package_fee'      => $package_fee,
+            'total_fee'        => $final_price,
             'currency'         => $settings->currency,
             // 'response_details' => $measurement
         ];

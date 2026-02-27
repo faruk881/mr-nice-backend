@@ -29,19 +29,19 @@ class DistanceService
      * @return array Contains success status, distanceKm, durationMinutes, and optional message
      */
     public function distanceMeasure(
-        string $measureMethod,
-        string $departureTime,
-        float $pickupLat,
-        float $pickupLon,
-        float $deliveryLat,
-        float $deliveryLon
+        string $measure_method,
+        string $departure_time,
+        float $pickup_lat,
+        float $pickup_lon,
+        float $delivery_lat,
+        float $delivery_lon
     ): array {
-        if ($measureMethod === 'haversine') {
-            return $this->calculateHaversine($pickupLat, $pickupLon, $deliveryLat, $deliveryLon);
+        if ($measure_method === 'haversine') {
+            return $this->calculateHaversine($pickup_lat, $pickup_lon, $delivery_lat, $delivery_lon);
         }
 
-        if ($measureMethod === 'google') {
-            return $this->calculateGoogleRoutes($departureTime, $pickupLat, $pickupLon, $deliveryLat, $deliveryLon);
+        if ($measure_method === 'google') {
+            return $this->calculateGoogleRoutes($departure_time, $pickup_lat, $pickup_lon, $delivery_lat, $delivery_lon);
         }
 
         return [
@@ -57,28 +57,28 @@ class DistanceService
     private function calculateHaversine(float $lat1, float $lon1, float $lat2, float $lon2): array
     {
         // Convert degrees to radians
-        $latFrom = deg2rad($lat1);
-        $lonFrom = deg2rad($lon1);
-        $latTo = deg2rad($lat2);
-        $lonTo = deg2rad($lon2);
+        $lat_from = deg2rad($lat1);
+        $lon_from = deg2rad($lon1);
+        $lat_to = deg2rad($lat2);
+        $lon_to = deg2rad($lon2);
 
-        $latDelta = $latTo - $latFrom;
-        $lonDelta = $lonTo - $lonFrom;
+        $lat_delta = $lat_to - $lat_from;
+        $lon_delta = $lon_to - $lon_from;
 
         // Haversine formula calculation
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+        $angle = 2 * asin(sqrt(pow(sin($lat_delta / 2), 2) +
+            cos($lat_from) * cos($lat_to) * pow(sin($lon_delta / 2), 2)));
 
-        $directDist = $angle * self::EARTH_RADIUS_KM;
+        $direct_dist = $angle * self::EARTH_RADIUS_KM;
         
         // Adjust for road distance (multiplying by 1.3)
-        $estimatedRoadDist = $directDist * self::ROAD_ADJUSTMENT_FACTOR;
-        $timeHours = $estimatedRoadDist / self::AVG_CITY_SPEED_KMH;
+        $estimated_road_dist = $direct_dist * self::ROAD_ADJUSTMENT_FACTOR;
+        $time_hours = $estimated_road_dist / self::AVG_CITY_SPEED_KMH;
 
         return [
             'success' => true,
-            'distanceKm' => round($estimatedRoadDist, 2),
-            'durationMinutes' => (int) round($timeHours * 60),
+            'distance_km' => round($estimated_road_dist, 2),
+            'duration_minutes' => (int) round($time_hours  * 60),
             'method' => 'haversine'
         ];
     }
@@ -86,18 +86,18 @@ class DistanceService
     /**
      * Fetches real-world road distance and traffic-aware duration via Google Routes API v2.
      */
-    private function calculateGoogleRoutes(string $time, float $pLat, float $pLon, float $dLat, float $dLon): array
+    private function calculateGoogleRoutes(string $time, float $pickup_lat, float $pickup_lon, float $delivery_lat, float $delivery_lon): array
     {
-        $apiKey = config('services.google_maps.key');
+        $api_key = config('services.google_maps.key');
 
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'X-Goog-Api-Key' => $apiKey,
+                'X-Goog-Api-Key' => $api_key,
                 'X-Goog-FieldMask' => 'distanceMeters,duration,status',
             ])->post('https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix', [
-                'origins' => [['waypoint' => ['location' => ['latLng' => ['latitude' => $pLat, 'longitude' => $pLon]]]]],
-                'destinations' => [['waypoint' => ['location' => ['latLng' => ['latitude' => $dLat, 'longitude' => $dLon]]]]],
+                'origins' => [['waypoint' => ['location' => ['latLng' => ['latitude' => $pickup_lat, 'longitude' => $pickup_lon]]]]],
+                'destinations' => [['waypoint' => ['location' => ['latLng' => ['latitude' => $delivery_lat, 'longitude' => $delivery_lon]]]]],
                 'travelMode' => 'DRIVE',
                 'departureTime' => $time,
                 'routingPreference' => 'TRAFFIC_AWARE_OPTIMAL',
@@ -113,8 +113,8 @@ class DistanceService
 
             return [
                 'success' => true,
-                'distanceKm' => round($result['distanceMeters'] / 1000, 2),
-                'durationMinutes' => (int) ceil(((float) rtrim($result['duration'], 's')) / 60),
+                'distance_km' => round($result['distanceMeters'] / 1000, 2),
+                'duration_minutes' => (int) ceil(((float) rtrim($result['duration'], 's')) / 60),
                 'response' => $result,
             ];
 
