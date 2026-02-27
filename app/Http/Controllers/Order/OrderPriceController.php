@@ -4,80 +4,90 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\DeliveryRequestRequest;
-use App\Http\Requests\Orders\CalculatePriceRequest;
 use App\Models\DeliveryFeeSetting;
 use App\Services\DistanceService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 
+/**
+ * Controller responsible for calculating real-time delivery pricing.
+ */
 class OrderPriceController extends Controller
 {
-    public function estimate(DeliveryRequestRequest $request, DistanceService $distanceService)
+    /**
+     * Estimates the delivery fee based on distance, package size, and base rates.
+     * * @param DeliveryRequestRequest $request Validates lat/lon, booking_date, and package_size
+     * @param DistanceService $distanceService The service we documented previously
+     * @return JsonResponse
+     */
+    public function estimate(DeliveryRequestRequest $request, DistanceService $distanceService): JsonResponse
     {
-        $pickup_lat = $request->pickup_lat;
-        $pickup_lon = $request->pickup_lon;
-        $delivery_lat = $request->delivery_lat;
-        $delivery_lon = $request->delivery_lon;
+        // 1. Determine Departure Time
+        // We default to 9:00 AM of the booking date or today to avoid midnight traffic anomalies
+        $departureTime = $request->booking_date 
+            ? Carbon::parse($request->booking_date)->setTime(9, 0)->toIso8601String()
+            : Carbon::now()->setTime(9, 0)->toIso8601String();
 
-        $distanceService = $distanceService->distanceMeasure('haversine',$pickup_lat,$pickup_lon,$delivery_lat,$delivery_lon);
-        // return $distanceService;
+        // 2. Calculate Distance via Service
+        $measurement = $distanceService->distanceMeasure(
+            'google', // google or haversine - we recommend Google for better accuracy in pricing
+            $departureTime,
+            (float) $request->pickup_lat,
+            (float) $request->pickup_lon,
+            (float) $request->delivery_lat,
+            (float) $request->delivery_lon
+        );
 
-        if(!$distanceService['success']){
-            return apiError('Failed to calculate distance', 500,$distanceService);
+        if (!$measurement['success']) {
+            return apiError('Failed to calculate distance: ' . ($measurement['message'] ?? ''), 500);
         }
 
-        $distance = $distanceService['distance_km'];
-        $time = $distanceService['minutes'];
+        // IMPORTANT: Use camelCase keys to match the DistanceService output
+        $distance = $measurement['distanceKm'];
+        $duration = $measurement['durationMinutes'];
 
+        // 3. Retrieve Pricing Configuration
+        $settings = DeliveryFeeSetting::first();
 
-        // Get the pricing settings
-        $prices = DeliveryFeeSetting::first();
-
-        // Check if price exists
-        if (!$prices) {
-            return apiError('Delivery pricing settings not found', 404);
+        if (!$settings) {
+            return apiError('Delivery pricing settings not configured in database', 404);
         }
 
-        // google api key needed later
-        $apiKey = config('services.google_maps.key');
-        
-        // Get requests
-        $origin = $request->pickup; 
-        $destination = $request->delivery; 
-        
-        $items = $request->items;
-        
+        // 4. Extract Rates
+        $baseFare    = (float) $settings->base_fare;
+        $pricePerKm  = (float) $settings->per_km_fee;
+        $packageSize = $request->package_size; // e.g., 'small', 'medium', 'large'
 
-        // Get Delivery Settings
-        $baseFare = (string) $prices->base_fare;
-        $pricePerKm =(string) $prices->per_km_fee;
-        $packagePrices = [
-            'small' => (string) $prices->small_package_fee,
-            'medium' => (string) $prices->medium_package_fee,
-            'large' => (string) $prices->large_package_fee,
+        // Map package size to the corresponding fee from settings
+        $packageFees = [
+            'small'  => (float) $settings->small_package_fee,
+            'medium' => (float) $settings->medium_package_fee,
+            'large'  => (float) $settings->large_package_fee,
         ];
 
-        // Get package size
-        $packageSize = $request->package_size;
-        $packagePrice = $packagePrices[$packageSize];
+        $packageFee = $packageFees[$packageSize] ?? 0;
 
-        // Calculate Total Price
-        $totalPrice = round(max(($distance*$pricePerKm)+$packagePrice,$baseFare),2);
+        // 5. Apply Pricing Formula
+        // Formula: (Distance * Rate) + Package Fee. 
+        // If the result is lower than the Base Fare, use the Base Fare.
+        $calculatedTotal = ($distance * $pricePerKm) + $packageFee;
+        $finalPrice = round(max($calculatedTotal, $baseFare), 2);
 
-        // Prepare response data
+        // 6. Response Construction
+        
         $data = [
-            'items' => $items,
-            'distance' => $distance,
-            'base_fare' => $baseFare,
-            'per_km_fee' => $pricePerKm,
-            'package_size' => $packageSize,
-            'package_fee' => $packagePrice,
-            'total_fee' => $totalPrice,
-            'est_time_minutes' => $time,
+            'items'            => $request->items,
+            'distance'         => $distance,
+            'est_time_minutes' => $duration,
+            'base_fare'        => $baseFare,
+            'per_km_fee'       => $pricePerKm,
+            'package_size'     => $packageSize,
+            'package_fee'      => $packageFee,
+            'total_fee'        => $finalPrice,
+            'currency'         => $settings->currency,
+            // 'response_details' => $measurement
         ];
 
-        // Return with data
         return apiSuccess('Delivery fee calculated successfully', $data);
     }
-
 }
