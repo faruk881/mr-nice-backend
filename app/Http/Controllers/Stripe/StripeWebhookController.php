@@ -27,6 +27,8 @@ class StripeWebhookController extends Controller
      */
     public function handleWebhook(Request $request) 
     {
+        Log::info('Received Stripe Webhook', ['payload' => $request->getContent()]);
+
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
         $endpointSecret = config('services.stripe.webhook_secret');
@@ -73,6 +75,7 @@ class StripeWebhookController extends Controller
      */
     protected function handleCheckoutSessionCompleted($session) 
     {
+        Log::info('Handling checkout.session.completed', ['session_id' => $session->id]);
         $payment = Payment::where('stripe_checkout_session_id', $session->id)->first();
 
         if (!$payment) {
@@ -96,6 +99,7 @@ class StripeWebhookController extends Controller
      */
     protected function handlePaymentIntentSucceeded($paymentIntent) 
     {
+        Log::info('Handling payment_intent.succeeded', ['pi' => $paymentIntent->id]);
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
         if (!$payment) {
@@ -121,6 +125,7 @@ class StripeWebhookController extends Controller
      */
     protected function processSuccess($payment, $paymentIntent)
     {
+        Log::info('Processing successful payment', ['payment_id' => $payment->id, 'payment_intent_id' => $paymentIntent->id]);
         // 1. Idempotency Check: Don't process if already marked as succeeded
         if ($payment->status === 'succeeded') {
             return;
@@ -163,6 +168,7 @@ class StripeWebhookController extends Controller
      */
     protected function handlePaymentIntentFailed($paymentIntent) 
     {
+        Log::info('Handling payment_intent.payment_failed', ['pi' => $paymentIntent->id]);
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
         if ($payment) {
