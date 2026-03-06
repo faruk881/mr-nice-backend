@@ -13,11 +13,49 @@ class CourierDeliveryController extends Controller
     /**
      * Display All Deliveries for the authenticated courier.
      */
-    public function index()
-    {
-        $deliveries = Order::where('courier_id', auth()->id())
-            ->whereIn('status', ['accepted', 'pickedup','delivered'])
-            ->get();
+    
+    public function index(Request $request)
+        {
+        $request->validate([
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'filter' => 'sometimes|nullable|in:active,completed,cancelled,all',
+        ]);
+
+        // Per page default
+        $perPage = $request->query('per_page', 10);
+
+        // Filter value
+        $filter = $request->query('filter', 'active');
+
+        // Base query
+        $query = Order::where('courier_id', auth()->id());
+
+        // Apply filter
+        switch ($filter) {
+            case 'active':
+                $query->whereIn('status', ['accepted', 'pickedup']);
+                break;
+
+            case 'completed':
+                $query->where('status', 'delivered');
+                break;
+
+            case 'cancelled':
+                $query->where('status', 'cancelled');
+                break;
+
+            case 'all':
+                $query->whereIn('status', ['accepted', 'pickedup', 'delivered', 'cancelled']);
+                break;
+        }
+
+        // Get paginated results
+        $deliveries = $query
+            ->latest()
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        // return
         return apiSuccess('Deliveries retrieved successfully', $deliveries);
     }
 
