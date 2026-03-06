@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminOrderRefundController;
 use App\Http\Controllers\Admin\AdminPrivacyController;
 use App\Http\Controllers\Admin\AdminTermsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
+use App\Http\Controllers\Admin\PlatformCommissionSettingController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -112,6 +113,11 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+
+    // Platform commission settings
+    Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');
+    Route::patch('/platform-commission-settings',[PlatformCommissionSettingController::class,'update'])->name('admin.platform-commission-settings.update');
+
     // Get and Update Pricing Settings
     Route::get('/delivery-pricing-settings', [DeliveryFeeSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
