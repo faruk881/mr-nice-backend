@@ -60,9 +60,12 @@ class OrdersController extends Controller
         // Standardize on snake_case for all logic variables
         $booking_date = $validated['booking_date'];
         
+        // Calculate departure time
         $departure_time = isset($booking_date)
-            ? Carbon::parse($booking_date)->setTime(9, 0)->toIso8601String()
-            : Carbon::now()->setTime(9, 0)->toIso8601String();
+
+            // $booking_date only contains date. Sent future time. 
+            ? Carbon::parse($booking_date)->setTime(Carbon::now()->hour, Carbon::now()->minute + 1)->toIso8601String()
+            : Carbon::now()->addMinute()->toIso8601String();
         
         // Call service (Method remains camelCase per PSR-12)
         $measure = $distance_service->distanceMeasure(
@@ -73,6 +76,10 @@ class OrdersController extends Controller
             $validated['delivery_lat'],
             $validated['delivery_lon']
         );
+
+        if(!$measure['success']) {
+            return apiError($measure['message'], 400);
+        }
 
         $distance = $measure['distance_km'];
         $settings = DeliveryFeeSetting::first();

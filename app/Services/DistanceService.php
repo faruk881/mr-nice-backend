@@ -105,7 +105,7 @@ class DistanceService
 
             if (!$response->successful()) {
                 Log::error("Google API HTTP Error", ['status' => $response->status(), 'body' => $response->body()]);
-                return ['success' => false, 'message' => 'Distance API unavailable.'];
+                return ['success' => false, 'message' => $response->body()];
             }
 
             $data = $response->json();
