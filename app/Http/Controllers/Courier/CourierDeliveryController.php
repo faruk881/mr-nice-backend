@@ -72,15 +72,18 @@ class CourierDeliveryController extends Controller
      */
     public function show(string $id)
     {
+        // Get the order
         $delivery = Order::where('id', $id)
             ->where('courier_id', auth()->id())
             ->with('customer:id,name,phone,profile_photo')
             ->first();
 
+        // Check if order exists
         if (!$delivery) {
             return apiError('Delivery not found.', 404);
         }
 
+        // return
         return apiSuccess('Delivery details retrieved successfully.', $delivery);
     }
 
@@ -101,18 +104,23 @@ class CourierDeliveryController extends Controller
     }
 
     public function pickup($id) {
+
+        // Get the order
         $delivery = Order::where('id', $id)
-            ->where('courier_id', auth()->id())
-            ->where('status', 'accepted')
+            ->where('status', 'pending')
             ->first();
 
+        // check of order exists
         if (!$delivery) {
             return apiError('Delivery not found or cannot be picked up.', 404);
         }
 
+        // update order status
         $delivery->status = 'pickedup';
+        $delivery->courier_id = auth()->id();
         $delivery->save();
 
+        // return
         return apiSuccess('Delivery marked as picked up.', $delivery);
     }
 
