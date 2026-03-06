@@ -37,6 +37,56 @@ class Order extends Model
         return $this->belongsTo(User::class, 'courier_id');
     }
 
+    protected $appends = [
+        'courier_commission',
+        'admin_commission'
+    ];
+
+    public function getCourierCommissionAttribute() {
+        
+        $settings = PlatformCommissionSetting::first();
+
+        if (!$settings) {
+            return null;
+        }
+
+        if ($settings->active_commission === 'commission_percent') {
+            return round($this->total_fee - ($this->total_fee * $settings->commission_percent) / 100, 2);
+        }
+
+        if ($settings->active_commission === 'commission_amount' && $this->total_fee < $settings->commission_amount) {
+            return null;
+        }
+        if ($settings->active_commission === 'commission_amount') {
+            return $this->total_fee - $settings->commission_amount;
+        }
+
+        return null;
+
+    }
+
+
+
+    public function getAdminCommissionAttribute() {
+        $settings = PlatformCommissionSetting::first();
+
+        if (!$settings) {
+            return null;
+        }
+
+        if ($settings->active_commission === 'commission_percent') {
+            return round(($this->total_fee * $settings->commission_percent) / 100, 2);
+        }
+        if ($settings->active_commission === 'commission_amount' && $this->total_fee < $settings->commission_amount) {
+            return null;
+        }
+        if ($settings->active_commission === 'commission_amount') {
+            return $settings->commission_amount;
+        }
+
+        return null;
+    }
+
     // --- Relationship: an order can have multiple payments ---
     public function payments() {
         return $this->hasMany(Payment::class);

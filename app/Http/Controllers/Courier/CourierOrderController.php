@@ -16,7 +16,8 @@ class CourierOrderController extends Controller
 
 
         // Get pending orders that are not yet accepted by any courier
-        $query = Order::where('status', 'pending')->whereNull('courier_id');
+        $query = Order::where('status', 'pending')
+            ->whereNull('courier_id');
 
         // filter by package size if provided
         switch ($size) {
