@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\CustomerBecomeCourierRequest;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CustomerCourierController extends Controller
 {
@@ -34,6 +35,8 @@ class CustomerCourierController extends Controller
             // Handle ID document upload
             $path = $request->file('id_document')->store('courier/id_documents', 'public');
 
+            DB::beginTransaction();
+            
             // Create courier profile
             $profile = $user->courierProfile()->create([
                 'city' => $request->city,
@@ -49,9 +52,12 @@ class CustomerCourierController extends Controller
             // Add courier role
             $user->roles()->syncWithoutDetaching([$courierId]);
 
+            DB::commit();
+
             // Retuen message
             return apiSuccess('Courier application submitted successfully. Await admin approval.', $profile);
         } catch (\Throwable $e) {
+            DB::rollBack();
             throw $e;
         }
     }

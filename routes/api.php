@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminPrivacyController;
 use App\Http\Controllers\Admin\AdminTermsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Admin\PlatformCommissionSettingController;
+use App\Http\Controllers\Admin\DeliveryApprovalController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -113,6 +114,10 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+
+    // Delivery
+    Route::get('/deliveries', [DeliveryApprovalController::class, 'index'])->name('admin.deliveries.index');
+    Route::patch('/deliveries/{id}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
 
     // Platform commission settings
     Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');

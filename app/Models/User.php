@@ -84,5 +84,14 @@ class User extends Authenticatable
         return $this->hasMany(CourierRating::class, 'courier_id');
     }
 
+        public function wallet() {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class);
+    }
+
 
 }

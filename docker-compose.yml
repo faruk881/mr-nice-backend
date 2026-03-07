@@ -1,38 +1,54 @@
 services:
+  # PHP-FPM Container
   app:
-    build: .
-    container_name: mr_nice
-    ports:
-      - "8001:80"
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: mr_nice_backend_app
     volumes:
       - .:/var/www/html
     depends_on:
       - db
 
+  # Nginx Container
+  web:
+    image: nginx:alpine
+    container_name: mr_nice_backend_web
+    ports:
+      - "8001:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  # MySQL Container
   db:
     image: mysql:8.0
-    container_name: mr_nice_db
+    container_name: mr_nice_backend_db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 7788
-      MYSQL_DATABASE: myapp
-      MYSQL_USER: myuser
+      MYSQL_DATABASE: mr_nice_backend_db
+      MYSQL_USER: mr_nice_user
       MYSQL_PASSWORD: mypassword
     ports:
       - "3308:3306"
     volumes:
       - dbdata:/var/lib/mysql
 
+  # phpMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: myapp_phpmyadmin
+    container_name: mr_nice_backend_phpmyadmin
     restart: always
     ports:
       - "8081:80"
     environment:
       PMA_HOST: db
       MYSQL_ROOT_PASSWORD: 7788
+    depends_on:
+      - db
 
 volumes:
   dbdata:
-

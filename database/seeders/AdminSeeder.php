@@ -31,5 +31,13 @@ class AdminSeeder extends Seeder
         if($adminRole) {
             $user->roles()->syncWithoutDetaching([$adminRole->id]);
         }
+
+        if (!$user->wallet) {
+            $user->wallet()->create([
+                'balance' => 0.00,
+                'currency' => 'CHF',
+                'status' => 'active',
+            ]);
+        }
     }
 }
