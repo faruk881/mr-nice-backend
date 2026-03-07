@@ -138,7 +138,7 @@ class CourierDeliveryController extends Controller
 
         // If order not found or not in correct status, return error
         if (!$delivery) {
-            return apiError('Delivery not found or cannot be marked as delivered.', 404);
+            return apiError('Delivery not found or cannot be delivered.', 404);
         }
 
         // Start transaction to ensure data integrity
@@ -157,7 +157,7 @@ class CourierDeliveryController extends Controller
 
             // Update order status and delivery proof path
             $delivery->update([
-                'status' => 'delivered',
+                'status' => 'pending_delivery',
                 'delivery_proof' => $path,
             ]);
 
@@ -165,7 +165,7 @@ class CourierDeliveryController extends Controller
             DB::commit();
 
             // Return success message
-            return apiSuccess('Delivery marked as delivered.', $delivery);
+            return apiSuccess('Order marked as pending delivery.', $delivery);
 
         } catch (\Throwable $e) {
 

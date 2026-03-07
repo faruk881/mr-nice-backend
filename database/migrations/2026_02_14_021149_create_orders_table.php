@@ -43,7 +43,7 @@ return new class extends Migration
             $table->boolean('is_paid')->default(false);
 
             // Status
-            $table->enum('status',['pending_payment','pending','accepted','pickedup','delivered','cancelled'])->default('pending_payment');
+            $table->enum('status',['pending_payment','pending','accepted','pickedup','pending_delivery','delivered','cancelled'])->default('pending_payment');
             $table->string('status_reason')->nullable();
             $table->string('delivery_proof')->nullable(); // for delivery photo
 
