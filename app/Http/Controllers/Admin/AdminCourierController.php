@@ -1,19 +1,23 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\Admin\CourierVerificationRequest;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class CourierVerificationController extends Controller
+class AdminCourierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        // Get the courier
+        $courier = User::all();
+
+        // Return the success message
+        return apiSuccess('All couriers loaded', $courier);
     }
 
     /**
@@ -35,7 +39,12 @@ class CourierVerificationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(CourierVerificationRequest $request, string $id)
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    public function verify(Request $request, string $id)
     {
         // Get the courier form user table
         $courier = User::where('id', $id)
@@ -62,7 +71,6 @@ class CourierVerificationController extends Controller
 
         // Return the success message
         return apiSuccess('Courier verification status updated.', $courier);
-
     }
 
     /**

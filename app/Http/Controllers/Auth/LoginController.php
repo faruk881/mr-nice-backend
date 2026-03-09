@@ -35,6 +35,8 @@ class LoginController extends Controller
             );
         }
 
+
+
         // Account status check
         if ($user->status !== 'active') {
             return apiError('Your account is not active.', 403);
@@ -44,6 +46,11 @@ class LoginController extends Controller
         $roleName = $request->type;
         if (!$user->roles()->where('name', $roleName)->exists()) {
             return apiError('You do not have access to this role.', 403);
+        }
+
+        // Check for courier pending document status
+        if ($roleName === 'courier' && $user->courierProfile->document_status != 'approved') {
+            return apiError('Cannot login as courier. Document verificaiton is pending', 403);
         }
 
         // Check users login session. if 3 session exists then log out from all session and login.
@@ -58,6 +65,7 @@ class LoginController extends Controller
         // Return success message.
         return apiSuccess('Login successful.', [
             'user'  => $user,
+            'courier_profile' => $user->courierProfile,
             'role' => $roleName,
             'token' => $token,
         ]);

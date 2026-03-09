@@ -18,7 +18,7 @@ class CourierDeliveryController extends Controller
         {
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
-            'filter' => 'sometimes|nullable|in:active,completed,cancelled,all',
+            'filter' => 'sometimes|nullable|in:active,completed,cancelled,delivered,pending_delivery,all',
         ]);
 
         // Per page default
@@ -43,9 +43,14 @@ class CourierDeliveryController extends Controller
             case 'cancelled':
                 $query->where('status', 'cancelled');
                 break;
+            case 'delivered':
+                $query->where('status', 'delivered');
+                break;
+            case 'pending_delivery':
+                $query->where('status', 'pending_delivery');
+                break;
 
             case 'all':
-                $query->whereIn('status', ['accepted', 'pickedup', 'delivered', 'cancelled']);
                 break;
         }
 

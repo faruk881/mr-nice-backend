@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminCourierController;
 use App\Http\Controllers\Admin\AdminFaqController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminOrderRefundController;
@@ -129,7 +130,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
 
     // Courier id verification
-    Route::patch('/couriers/{courier}/verification', [CourierVerificationController::class, 'update'])->name('admin.couriers.verification.update');
+    Route::patch('/couriers/{courier}/verification', [AdminCourierController::class, 'verify'])->name('admin.couriers.verification.update');
+    Route::get('/couriers',[AdminCourierController::class,'index'])->name('admin.couriers.index');
     
     // Order Management
     Route::apiResource('orders', AdminOrderController::class)->only(['index']);
