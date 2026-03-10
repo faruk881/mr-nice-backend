@@ -57,7 +57,7 @@ class CourierOrderController extends Controller
     }
 
     public function accept($orderId) {
-        // Accept the order
+        // Get the order
         $order = Order::where('id', $orderId)->where('status', 'pending')->first();
 
         // Check if order exists and is pending
@@ -65,6 +65,11 @@ class CourierOrderController extends Controller
             return apiError('Order not found or already accepted.', 404);
         }
 
+        // Check if the courier accepting his own order.
+        if($order->customer_id == auth()->id()) {
+            return apiError('You cannot accept your own order.', 422);
+        }
+        
         // Update the order
         $order->update([
             'courier_id' => auth()->id(),
