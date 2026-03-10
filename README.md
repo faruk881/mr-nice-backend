@@ -275,8 +275,8 @@ Features and documentation may change as development progresses.
 
 # 📄 License
 
-This project is the property of **SparkTech Agency**.
+This project is the property of **SparkTech Agency**.  
 
-Developed and maintained by **Md. Omar Faruk**.
+Developed by **Md. Omar Faruk** as part of the **ByteMasters** team.  
 
 All rights reserved. Unauthorized copying, modification, or distribution of this project without permission is prohibited.
