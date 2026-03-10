@@ -112,7 +112,7 @@ class CourierDeliveryController extends Controller
 
         // Get the order
         $delivery = Order::where('id', $id)
-            ->where('status', 'pending')
+            ->where('status', 'accepted')
             ->first();
 
         // check of order exists

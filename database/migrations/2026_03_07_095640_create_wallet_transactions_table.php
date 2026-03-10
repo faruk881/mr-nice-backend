@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('wallet_id')->constrained()->cascadeOnDelete();
             $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('type',['credit','debit','adjustment'])->index();
-            $table->enum('source',['courier_commission','refund','adjustment','payout','payout_request','payout_failed','payout_canceled'])->index();
+            $table->enum('source',['delivery_commission','refund','adjustment','payout','payout_request','payout_failed','payout_canceled'])->index();
             $table->decimal('amount', 12, 2)->unsigned();
             $table->decimal('balance_before', 12, 2)->unsigned();
             $table->decimal('balance_after', 12, 2)->unsigned();

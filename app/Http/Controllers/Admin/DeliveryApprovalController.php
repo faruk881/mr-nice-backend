@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeliveryApprovalRequest;
+use App\Http\Requests\Admin\ViewDeliveriesRequest;
 use App\Models\Order;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
@@ -14,27 +15,43 @@ class DeliveryApprovalController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(ViewDeliveriesRequest $request)
     {
+        // Pagination and filters
+        $perPage = $request->input('per_page', 10);
+        $filter = $request->input('filter', 'all'); // e.g., 'pending_payment','pending','accepted','pickedup','pending_delivery','delivered','cancelled','all'
+        $search = $request->input('search', '');
+        $sort = $request->input('sort', 'created_at');
+        $order = $request->input('order', 'desc');
+    
+        // Base query
+        $query = Order::query();
+    
+        // Apply filter if not 'all'
+        if (!empty($filter) && $filter !== 'all') {
+            $query->where('status', $filter);
+        }
+    
+        // Apply search if provided (assuming searching by order number or customer name)
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('pickup_address', 'like', "%{$search}%")
+                  ->orWhere('delivery_address', 'like', "%{$search}%");
+            });
+        }
+    
+        // Apply sorting
+        if(!empty($sort) && !empty($order)) {
+            $query->orderBy($sort, $order);
+        }
+    
         // Paginate
-        $perPage = $request->input('per_page',10);
-        
-        // Get pending deliveries
-        $pendingDeliveries = Order::where('status','pending_delivery')->paginate($perPage);
-
-        // return
-        return apiSuccess('All pending delivery loaded successfully', $pendingDeliveries);
-
+        $pendingDeliveries = $query->paginate($perPage);
+    
+        // Return response
+        return apiSuccess('Deliveries loaded successfully', $pendingDeliveries);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
     /**
      * Display the specified resource.
      */
@@ -67,8 +84,7 @@ class DeliveryApprovalController extends Controller
                 */
                 
                 // Get the wallet from order
-                dd($order->courier->id);
-                $courierWallet = $order->user->wallet;
+                $courierWallet = $order->courier->wallet;
 
                 // Check if wallet exists
                 if (!$courierWallet || $courierWallet->status !== 'active') {
@@ -91,7 +107,7 @@ class DeliveryApprovalController extends Controller
                     'wallet_id'      => $courierWallet->id,
                     'order_id'        => $order->id,
                     'type'           => 'credit',
-                    'source'         => 'delivery_commission',
+                    'source'         => 'delivery_commission', //'delivery_commission','refund','adjustment','payout','payout_request','payout_failed','payout_canceled'
                     'amount'         => $order->courier_commission,
                     'balance_before' => $balanceBefore,
                     'balance_after'  => $balanceAfter,
