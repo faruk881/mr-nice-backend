@@ -22,11 +22,11 @@ class OrderPriceController extends Controller
      */
     public function estimate(DeliveryRequestRequest $request, DistanceService $distance_service): JsonResponse
     {
-        // 1. Determine Departure Time
-        // We default to 9:00 AM of the booking date or today to avoid midnight traffic anomalies
-        $departure_time = $request->booking_date 
-            ? Carbon::parse($request->booking_date)->setTime(9, 0)->toIso8601String()
-            : Carbon::now()->setTime(9, 0)->toIso8601String();
+        // Calculate departure time
+        $departure_time = isset($booking_date)
+            // $booking_date only contains date. Sent future time. 
+            ? Carbon::parse($booking_date)->setTime(Carbon::now()->hour, Carbon::now()->minute + 1)->toIso8601String()
+            : Carbon::now()->addMinute()->toIso8601String();
 
         // 2. Calculate Distance via Service
         $measurement = $distance_service->distanceMeasure(
