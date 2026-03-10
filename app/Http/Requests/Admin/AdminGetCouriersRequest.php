@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class AdminGetCouriersRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'sort' => 'nullable|string|in:created_at,updated_at',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'search.string' => 'The search must be a string',
+            'per_page.integer' => 'The per page must be an integer',
+            'per_page.min' => 'The per page must be at least 1',
+            'per_page.max' => 'The per page must be at most 100',
+            'sort.string' => 'The sort must be a string',
+        ];
+    }
+}

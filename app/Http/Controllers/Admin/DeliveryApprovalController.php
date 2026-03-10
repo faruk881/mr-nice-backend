@@ -67,6 +67,7 @@ class DeliveryApprovalController extends Controller
                 */
                 
                 // Get the wallet from order
+                dd($order->courier->id);
                 $courierWallet = $order->user->wallet;
 
                 // Check if wallet exists

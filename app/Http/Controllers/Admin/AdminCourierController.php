@@ -5,19 +5,34 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-
+use App\Http\Requests\Admin\AdminGetCouriersRequest;
+use App\Http\Requests\Admin\AdminVerifyCourierRequest;
 class AdminCourierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(AdminGetCouriersRequest $request)
     {
-        // Get the courier
-        $courier = User::all();
-
-        // Return the success message
-        return apiSuccess('All couriers loaded', $courier);
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10);
+        $sort = $request->input('sort', 'created_at');
+    
+        $couriers = User::whereHas('roles', function($query) {
+                $query->where('name', 'courier');
+            })
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->with('courierProfile')
+            ->orderBy($sort, 'desc')
+            ->paginate($perPage);
+    
+        return apiSuccess('All couriers loaded', $couriers);
     }
 
     /**
@@ -44,7 +59,7 @@ class AdminCourierController extends Controller
         //
     }
 
-    public function verify(Request $request, string $id)
+    public function verify(AdminVerifyCourierRequest $request, string $id)
     {
         // Get the courier form user table
         $courier = User::where('id', $id)
@@ -59,8 +74,13 @@ class AdminCourierController extends Controller
             return apiError('Courier not found.', 404);
         }
 
-        if($courier->courierProfile->document_status == 'approved') {
-            return apiError('This courier is already approved.', 422);
+        // Check if the courier document is already verified or rejected
+        if($courier->courierProfile->document_status == $request->status) {
+            return apiError('This courier is document is already '.$request->status.'.', 422);
+        }
+
+        if($courier->courierProfile->document_status != 'pending') {
+            return apiError('This courier is document is not pending.', 422);
         }
 
         // Update the courier profile document status
