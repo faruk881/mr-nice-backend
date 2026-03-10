@@ -39,7 +39,7 @@ class UserRegisterRequest extends FormRequest
 
             // Conditional Courier Fields
             'city'         => 'required_if:type,courier|string|max:255',
-            'vehicle_type' => 'required_if:type,courier|string|max:100',
+            'vehicle_type' => 'required_if:type,courier|in:bicycle,car,motorbike,cargo-van',
             'package_size' => 'nullable|string|max:50',
             'id_document'  => 'required_if:type,courier|file|mimes:jpg,jpeg,png,pdf|max:4096',
         ];
@@ -72,7 +72,8 @@ class UserRegisterRequest extends FormRequest
 
             // Courier-specific messages
             'city.required_if'         => 'Please specify the city where you will be operating.',
-            'vehicle_type.required_if' => 'We need to know what vehicle you use (e.g., Bike, Car, Van).',
+            'vehicle_type.required_if' => 'We need to know what vehicle you use.',
+            'vehicle_type.in' => 'Please select a valid vehicle type: bicycle, car, motorbike, cargo-van',
             'id_document.required_if'  => 'A valid ID document (PDF or Image) is required for courier verification.',
             'id_document.mimes'        => 'Your ID must be a JPG, PNG, or PDF file.',
             'id_document.max'          => 'The document file size must not exceed 4MB.',
