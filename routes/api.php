@@ -17,7 +17,7 @@ use App\Http\Controllers\Auth\PasswordUpdateController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Courier\CourierDeliveryController;
 use App\Http\Controllers\Courier\CourierOrderController;
-use App\Http\Controllers\CourierVerificationController;
+use App\Http\Controllers\Courier\CourierEarningsController;
 use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CourierRatingController;
 use App\Http\Controllers\Customer\CustomerCourierController;
@@ -64,12 +64,9 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     // Order Price Estimation
     Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
 
-
-
     // Payment Methods
     Route::get('payment-methods', [CustomerPaymentMethodsController::class, 'index'])->name('customer.payment-methods.index');
     Route::post('payment-methods', [CustomerPaymentMethodsController::class, 'store'])->name('customer.payment-methods.store');
-
 
     // Become Courier
     Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
@@ -109,6 +106,9 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
         Route::get('/deliveries/{id}',[CourierDeliveryController::class, 'show'])->name('courier.deliveries.show');
         Route::patch('/deliveries/{id}/pickup', [CourierDeliveryController::class, 'pickup'])->name('courier.orders.pickup');
         Route::patch('/deliveries/{id}/deliver', [CourierDeliveryController::class, 'deliver'])->name('courier.orders.deliver');
+
+        // Earnings
+        Route::get('/earnings', [CourierEarningsController::class, 'index'])->name('courier.earnings.index');
 
     });
 });

@@ -37,6 +37,10 @@ class Order extends Model
         return $this->belongsTo(User::class, 'courier_id');
     }
 
+    public function walletTransaction() {
+        return $this->hasOne(WalletTransaction::class);
+    }
+
     protected $appends = [
         'courier_commission',
         'admin_commission'

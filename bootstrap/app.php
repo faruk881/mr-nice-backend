@@ -34,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         if ($request->expectsJson()) {
 
             $status = 500;
-            $message = 'Something went wrong.';
+            $message = 'Backend server error.';
             $errors = [];
 
             // Validation error
