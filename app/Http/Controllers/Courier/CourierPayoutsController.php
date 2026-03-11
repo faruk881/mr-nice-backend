@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Courier;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payout;
+use App\Models\PayoutThrsehold;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,11 +28,14 @@ class CourierPayoutsController extends Controller
             // Get the courier
             $courier = auth()->user();
 
+            // Get Payout Thrsehold
+            $payoutThrsehold = PayoutThrsehold::first();
+
             // Set min amount
-            $minAmount = 30;
+            $minAmount = $payoutThrsehold->minimum_amount;
 
             // Set max amount
-            $maxAmount = 9999;
+            $maxAmount = $payoutThrsehold->maximum_amount;
 
             // Get the wallet
             $wallet = $courier->wallet;

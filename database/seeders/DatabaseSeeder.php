@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PayoutThrsehold;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminSeeder::class);
         $this->call(DeliveryFeeSettingsSeeder::class);
         $this->call(PlatformCommissionSettingSeeder::class);
+        $this->call(PayoutThrseholdSeeder::class);
         
     }
 }
