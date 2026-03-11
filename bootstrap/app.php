@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
     $exceptions->render(function (Throwable $e, Request $request) {
 
-        if ($request->expectsJson()) {
+        // if ($request->expectsJson()) {
 
             $status = 500;
             $message = 'Backend server error.';
@@ -40,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Validation error
             if ($e instanceof \Illuminate\Validation\ValidationException) {
                 $status = 422;
-                $message = 'Validation failed.';
+                $message = 'Something went wrong.';
                 $errors = $e->errors();
             }
 
@@ -58,8 +58,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Debug mode
             if (config('app.debug')) {
-                $errors['debug'] = [
-                    'message' => $e->getMessage(),
+                $message = $e->getMessage();
+                $errors = [
                     'trace' => $e->getTraceAsString(),
                 ];
             }
@@ -69,7 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $message,
                 'errors'  => $errors,
             ], $status);
-        }
+        // }
     });
 
 })
