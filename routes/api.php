@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CourierPaymentMethodsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Admin\PlatformCommissionSettingController;
 use App\Http\Controllers\Admin\DeliveryApprovalController;
+use App\Http\Controllers\Admin\PayoutThrseholdsController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -154,6 +155,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     // Courier id verification
     Route::patch('/couriers/{courier}/verification', [AdminCourierController::class, 'verify'])->name('admin.couriers.verification.update');
     Route::get('/couriers',[AdminCourierController::class,'index'])->name('admin.couriers.index');
+
+    // Payout Thrseholds
+    Route::get('/payout-thrseholds',[PayoutThrseholdsController::class,'index'])->name('admin.payout-thrseholds.index');
+    Route::patch('/payout-thrseholds',[PayoutThrseholdsController::class,'update'])->name('admin.payout-thrseholds.update');
     
     // Order Management
     Route::apiResource('orders', AdminOrderController::class)->only(['index']);
