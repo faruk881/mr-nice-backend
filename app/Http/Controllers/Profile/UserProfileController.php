@@ -41,7 +41,7 @@ class UserProfileController extends Controller
     {
         $user = auth()->user()->load('courierProfile');
 
-        return apiSuccess('Profile loaded', new UserProfileViewResource($user));
+        return apiSuccess('Profile loaded', $user);
     }
 
     /**
