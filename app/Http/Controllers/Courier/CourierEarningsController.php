@@ -97,13 +97,6 @@ class CourierEarningsController extends Controller
         // 05. Available Balance
         $availableBalance = $wallet->balance;
 
-        // 06. Delivery History
-        $deliveryHistory = $user->assignedOrders()
-            ->where('status', 'delivered')
-            ->with('walletTransaction:id,wallet_id,order_id,amount')
-            ->get()
-            ->makeHidden(['courier_commission', 'admin_commission']);
-
         // Prepare data
         $data = [
             'total_earnings' => $totalEarnings,
@@ -111,11 +104,55 @@ class CourierEarningsController extends Controller
             'completed_deliveries' => $completedDeliveries,
             'earning_trend' => $earningTrend,
             'available_balance' => $availableBalance,
-            'delivery_history' => $deliveryHistory
         ];
 
         // Return
         return apiSuccess('Earnings dashboard retrieved successfully', $data);
+    }
+
+    /**
+     * Delivery history for earnings page
+     */
+    public function deliveryHistory(Request $request) 
+    {
+        // Get pagination
+        $perPage = $request->query('per_page',10);
+
+        // Get the user
+        $user = auth()->user();
+
+        // Load Delivery History
+        $deliveryHistory = $user->assignedOrders()
+            ->where('status', 'delivered')
+            ->with('walletTransaction:id,wallet_id,order_id,amount')
+            ->paginate($perPage);
+
+        // Remove courier commission and admin commission
+        $deliveryHistory->setCollection(
+            $deliveryHistory->getCollection()->makeHidden(['courier_commission', 'admin_commission'])
+        );
+
+        // Return the delivery history
+        return apiSuccess('Delivery history loaded successfully',$deliveryHistory);
+    }
+    /**
+     * Payouts history for earnings page
+     */
+    public function payoutHistory(Request $request) 
+    {
+        // Get pagination
+        $perPage = $request->query('per_page',10);
+
+        // Get the user
+        $user = auth()->user();
+
+        // Get payout history
+        $payoutHistory = $user->payouts()
+            ->paginate($perPage);
+
+        // return
+        return apiSuccess('Payout history loaded successfully',$payoutHistory);
+    
     }
 
     /**

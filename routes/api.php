@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminOrderRefundController;
 use App\Http\Controllers\Admin\AdminPrivacyController;
 use App\Http\Controllers\Admin\AdminTermsController;
+use App\Http\Controllers\Admin\CourierPaymentMethodsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Admin\PlatformCommissionSettingController;
 use App\Http\Controllers\Admin\DeliveryApprovalController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Courier\CourierDeliveryController;
 use App\Http\Controllers\Courier\CourierOrderController;
 use App\Http\Controllers\Courier\CourierEarningsController;
+use App\Http\Controllers\Courier\CourierPayoutsController;
+use App\Http\Controllers\Courier\CourierStripeController;
 use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CourierRatingController;
 use App\Http\Controllers\Customer\CustomerCourierController;
@@ -109,9 +112,28 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
         // Earnings
         Route::get('/earnings', [CourierEarningsController::class, 'index'])->name('courier.earnings.index');
+        Route::get('/earnings/delivery-history', [CourierEarningsController::class, 'deliveryHistory'])->name('courier.earnings.delivery-history');
+        Route::get('/earnings/payout-history', [CourierEarningsController::class, 'payoutHistory'])->name('courier.earnings.payout-history');
+
+        // Payouts
+        Route::post('/payouts',[CourierPayoutsController::class,'store'])->name('courier.payouts.store');
+
+        // Payment Methods
+        Route::get('/payment-methods',[CourierPaymentMethodsController::class,'index'])->name('courier.payment-methods.index');
+
+        // Stripe
+        Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
 
     });
+
+
 });
+
+Route::prefix('courier')->group(function(){
+    // Stripe callback
+    Route::get('/stripe/callback', [CourierStripeController::class, 'handleStripeCallback'])->name('courier.stripe.callback');
+});
+
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {

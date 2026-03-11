@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Http\Controllers\Courier;
+
+use App\Http\Controllers\Controller;
+use App\Models\Payout;
+use App\Models\WalletTransaction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class CourierPayoutsController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        try {
+            // Get the courier
+            $courier = auth()->user();
+
+            // Set min amount
+            $minAmount = 30;
+
+            // Set max amount
+            $maxAmount = 9999;
+
+            // Get the wallet
+            $wallet = $courier->wallet;
+
+            // Get payout amount
+            $payoutAmount = $wallet->balance;
+
+            // Check if stripe account is connected
+            if(!$courier->stripe_user_id) {
+                return apiError('Stripe account is not connected',409);
+            }
+
+            // Check minimum payout amount
+            if( $payoutAmount < $minAmount ) {
+                return apiError('Minimum payout amount is '.$minAmount.' USD', 422);
+            }
+
+            // Check maximum payout amount
+            if( $payoutAmount > $maxAmount ) {
+                return apiError('The maximum payout amount is '.$maxAmount.' USD', 422);
+            }
+
+
+            // Start Transaction
+            DB::beginTransaction();
+            $payout = Payout::create([
+                'user_id'      => $courier->id,
+                'wallet_id'    => $wallet->id,
+                'amount'       => $payoutAmount,
+                'currency'     => "CHF",
+                'status'       => 'requested',
+                'requested_at' => now(),
+            ]);
+
+            // Lock funds (debit wallet)
+            WalletTransaction::create([
+                'wallet_id'       => $wallet->id,
+                'order_id'         => null,
+                'type'            => 'debit',
+                'source'          => 'payout_request',
+                'amount'          => $payoutAmount,
+                'balance_before'  => $wallet->balance,
+                'balance_after'   => $wallet->balance - $payoutAmount,
+                'status'          => 'completed',
+                'metadata'        => [
+                    'payout_id' => $payout->id,
+                ],
+            ]);
+
+            // Update wallet balance
+            $wallet->decrement('balance', $payoutAmount);
+
+            // Commit
+            DB::commit();
+
+            // Prepare Data
+            $data = [
+                'payout_id' => $payout->id,
+                'amount' => $payout->amount,
+                'status' => $payout->status
+            ];
+
+            // return
+            return apiSuccess('Payout request submitted successfully',$data);
+
+        } catch(\Throwable $e) {
+            // Rollback of error
+            DB::rollback();
+            return apiError('Failed to create payout request '.$e->getMessage(), 500);
+
+        }
+
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
+}

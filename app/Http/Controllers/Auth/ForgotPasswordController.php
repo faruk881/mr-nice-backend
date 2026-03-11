@@ -32,15 +32,15 @@ class ForgotPasswordController extends Controller
             }
 
             // Check if user email is verified.
-            if (! $user->email_verified_at) {
-                return apiError('You cannot request password reset until you verify email first');
-            }
+            // if (! $user->email_verified_at) {
+            //     return apiError('You cannot request password reset until you verify email first');
+            // }
 
             // OTP expired or not generated yet → resend
             if (! $user->otp_expires_at || Carbon::now()->gt($user->otp_expires_at)) {
                 $otpService->sendEmailOtp($user,'password_reset');
 
-                return apiSuccess('A verification code has been sent to your email.',null,200);
+                return apiSuccess('A verification code has been sent to your email.',$user->email);
             }
 
             // OTP already valid → block resend
@@ -72,6 +72,13 @@ class ForgotPasswordController extends Controller
                 'otp' => null,
                 'otp_expires_at' => null,
             ]);
+
+            // Check if user email is verified.
+            if (! $user->email_verified_at) {
+                $user->update([
+                    'email_verified_at' => Carbon::now(),
+                ]);
+            }
 
             // revoke all tokens
             $user->tokens()->delete();
