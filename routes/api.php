@@ -20,11 +20,13 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Courier\CourierDeliveryController;
 use App\Http\Controllers\Courier\CourierOrderController;
 use App\Http\Controllers\Courier\CourierEarningsController;
+use App\Http\Controllers\Courier\CourierNotificationsController;
 use App\Http\Controllers\Courier\CourierPayoutsController;
 use App\Http\Controllers\Courier\CourierStripeController;
 use App\Http\Controllers\Customer\ContactMessageController;
 use App\Http\Controllers\Customer\CourierRatingController;
 use App\Http\Controllers\Customer\CustomerCourierController;
+use App\Http\Controllers\Customer\CustomerNotificationsController;
 use App\Http\Controllers\Customer\CustomerPaymentMethodsController;
 use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
@@ -92,7 +94,11 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     Route::get('/faqs', [AdminFaqController::class, 'index'])->name('customer.faqs.index');
     Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.terms.show');
     Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
+    Route::get('/notifications', [CustomerNotificationsController::class, 'index'])->name('customer.notifications.index');
+
+    
 });
+
 
 // Courier Routes
 Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->group(function () {
@@ -124,6 +130,7 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
         // Stripe
         Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
+        Route::get('/notifications', [CourierNotificationsController::class, 'index'])->name('courier.notifications.index');
 
     });
 

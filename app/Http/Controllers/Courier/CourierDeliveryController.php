@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Courier;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Notifications\OrderStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -124,6 +125,11 @@ class CourierDeliveryController extends Controller
         $delivery->status = 'pickedup';
         $delivery->courier_id = auth()->id();
         $delivery->save();
+        
+        // Sent notification
+        $delivery->customer->notify( 
+            new OrderStatusNotification($delivery, 'pickedup') 
+        ); 
 
         // return
         return apiSuccess('Delivery marked as picked up.', $delivery);

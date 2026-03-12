@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payout;
 use App\Models\PayoutThrsehold;
 use App\Models\WalletTransaction;
+use App\Notifications\CourierPayoutStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -90,6 +91,11 @@ class CourierPayoutsController extends Controller
 
             // Commit
             DB::commit();
+
+            // Sent notification
+            $payout->user->notify( 
+                new CourierPayoutStatusNotification($payout, 'requested') 
+            );
 
             // Prepare Data
             $data = [

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
+use App\Notifications\OrderStatusNotification;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use Stripe\StripeClient;
@@ -153,11 +154,20 @@ class StripeWebhookController extends Controller
 
             // 3. Update Order Record
             if ($payment->order) {
+                $order = $payment->order;
                 $payment->order->update([
                     'is_paid' => true,
                     'status'  => 'pending'
                 ]);
             }
+
+            // 4. Notify Customer 
+            if ($order->customer) { 
+                $order->customer->notify( 
+                    new OrderStatusNotification($order, 'pending') 
+                ); 
+            }
+
         });
 
         Log::info('Payment processed successfully', ['payment_id' => $payment->id]);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Courier;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Notifications\OrderStatusNotification;
 use Illuminate\Http\Request;
 
 class CourierOrderController extends Controller
@@ -75,6 +76,11 @@ class CourierOrderController extends Controller
             'courier_id' => auth()->id(),
             'status' => 'accepted',
         ]);
+
+        // Sent notification
+        $order->customer->notify( 
+            new OrderStatusNotification($order, 'accepted') 
+        ); 
 
         // Return response
         return apiSuccess('Order accepted successfully.', $order);

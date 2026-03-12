@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\DeliveryApprovalRequest;
 use App\Http\Requests\Admin\ViewDeliveriesRequest;
 use App\Models\Order;
 use App\Models\WalletTransaction;
+use App\Notifications\OrderStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -151,6 +152,11 @@ class DeliveryApprovalController extends Controller
                 $order->update([
                     'status' => 'delivered'
                 ]);
+
+                // Sent notification
+                $order->customer->notify( 
+                    new OrderStatusNotification($order, 'delivered') 
+                ); 
 
                 DB::commit();
 
