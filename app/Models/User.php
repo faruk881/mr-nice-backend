@@ -91,7 +91,7 @@ class User extends Authenticatable
 
     public function payouts()
     {
-        return $this->hasMany(Payout::class);
+        return $this->hasMany(Payout::class,'courier_id');
     }
 
 

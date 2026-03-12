@@ -12,9 +12,9 @@ class Payout extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
+
+    public function courier() {
+        return $this->belongsTo(User::class, 'courier_id');
     }
 
     public function wallet()

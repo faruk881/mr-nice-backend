@@ -63,7 +63,7 @@ class CourierPayoutsController extends Controller
             // Start Transaction
             DB::beginTransaction();
             $payout = Payout::create([
-                'user_id'      => $courier->id,
+                'courier_id'      => $courier->id,
                 'wallet_id'    => $wallet->id,
                 'amount'       => $payoutAmount,
                 'currency'     => "CHF",
@@ -93,7 +93,7 @@ class CourierPayoutsController extends Controller
             DB::commit();
 
             // Sent notification
-            $payout->user->notify( 
+            $payout->courier->notify( 
                 new CourierPayoutStatusNotification($payout, 'requested') 
             );
 

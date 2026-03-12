@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payouts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('courier_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('wallet_id')->constrained()->cascadeOnDelete();
 
             $table->decimal('amount', 12, 2);
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
+            $table->index(['courier_id', 'status']);
         });
     }
 

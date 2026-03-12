@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminCourierController;
+use App\Http\Controllers\Admin\AdminCourierPayoutsController;
 use App\Http\Controllers\Admin\AdminFaqController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminOrderRefundController;
 use App\Http\Controllers\Admin\AdminPrivacyController;
 use App\Http\Controllers\Admin\AdminTermsController;
-use App\Http\Controllers\Admin\CourierPaymentMethodsController;
 use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Admin\PlatformCommissionSettingController;
 use App\Http\Controllers\Admin\DeliveryApprovalController;
@@ -21,6 +21,7 @@ use App\Http\Controllers\Courier\CourierDeliveryController;
 use App\Http\Controllers\Courier\CourierOrderController;
 use App\Http\Controllers\Courier\CourierEarningsController;
 use App\Http\Controllers\Courier\CourierNotificationsController;
+use App\Http\Controllers\Courier\CourierPaymentMethodsController;
 use App\Http\Controllers\Courier\CourierPayoutsController;
 use App\Http\Controllers\Courier\CourierStripeController;
 use App\Http\Controllers\Customer\ContactMessageController;
@@ -32,12 +33,14 @@ use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
 use App\Http\Controllers\Profile\UserProfileController;
+use App\Http\Controllers\Stripe\StripeConnectWebhookController;
 use App\Http\Controllers\Stripe\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 
 // Stripe Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+Route::post('/stripe-connect/webhook',[StripeConnectWebhookController::class,'handleWebhook']);
 
 // Auth Routes
 Route::prefix('auth')->group(function () {
@@ -129,7 +132,7 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
         Route::get('/payment-methods',[CourierPaymentMethodsController::class,'index'])->name('courier.payment-methods.index');
 
         // Stripe
-        Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
+        // Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
         Route::get('/notifications', [CourierNotificationsController::class, 'index'])->name('courier.notifications.index');
 
     });
@@ -153,6 +156,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     // Platform commission settings
     Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');
     Route::patch('/platform-commission-settings',[PlatformCommissionSettingController::class,'update'])->name('admin.platform-commission-settings.update');
+
+    // Courier Payouts
+    Route::get('/courier-payouts', [AdminCourierPayoutsController::class, 'index'])->name('courier.earnings.index');
+    Route::patch('/courier-payouts/{id}', [AdminCourierPayoutsController::class, 'update'])->name('courier.earnings.update');
 
     // Get and Update Pricing Settings
     Route::get('/delivery-pricing-settings', [DeliveryFeeSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
