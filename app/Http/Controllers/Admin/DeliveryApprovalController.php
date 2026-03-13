@@ -142,7 +142,7 @@ class DeliveryApprovalController extends Controller
                     'order_id'        => $order->id,
                     'type'           => 'credit',
                     'source'         => 'delivery_commission',
-                    'amount'         => $order->courier_commission,
+                    'amount'         => $order->admin_commission,
                     'balance_before' => $balanceBefore,
                     'balance_after'  => $balanceAfter,
                     'status'         => 'completed',

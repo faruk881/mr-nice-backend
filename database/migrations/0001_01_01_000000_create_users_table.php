@@ -36,8 +36,8 @@ return new class extends Migration
 
             // Stripe info
             $table->string('stripe_customer_id')->nullable();
-            $table->string('stripe_account_id')->nullable();
-            $table->boolean('stripe_onboarded')->default(false);
+            $table->string('stripe_user_id')->nullable();
+            // $table->boolean('stripe_onboarded')->default(false);
 
             // Moderation
             $table->foreignId('moderated_by')->nullable()->constrained('users')->nullOnDelete();

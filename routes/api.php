@@ -40,7 +40,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 // Stripe Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
-Route::post('/stripe-connect/webhook',[StripeConnectWebhookController::class,'handleWebhook']);
+// Route::post('/stripe-connect/webhook',[StripeConnectWebhookController::class,'handleWebhook']);
 
 // Auth Routes
 Route::prefix('auth')->group(function () {

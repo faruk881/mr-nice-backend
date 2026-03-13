@@ -145,7 +145,7 @@ class AdminCourierPayoutsController extends Controller
 
                 ProcessStripePayout::dispatch($payout->id);
 
-                return apiSuccess('Payout approved. Processing for transfer.', [
+                return apiSuccess('Balance transfered to couriers bank.', [
                     'payout_id' => $payout->id,
                     'status'    => $payout->status,
                 ]);

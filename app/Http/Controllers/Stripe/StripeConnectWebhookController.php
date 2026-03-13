@@ -15,157 +15,187 @@ class StripeConnectWebhookController extends Controller
 {
     public function handleWebhook(Request $request)
     {
-        Log::info('Stripe webhook received', ['headers' => $request->headers->all(), 'body' => $request->getContent()]);
-        // Retrieve the request's body and parse it as JSON
-        $payload    = $request->getContent();
-        $sigHeader  = $request->header('Stripe-Signature');
-        $secret     = config('services.stripe.connect_webhook_secret');
+        Log::info('Stripe Connect webhook received');
 
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature');
+        $secret = config('services.stripe.connect_webhook_secret');
+
+        // 1️⃣ Verify webhook signature
         try {
-            // Verify the webhook signature and construct the event
-            $event = Webhook::constructEvent(
-                $payload,
-                $sigHeader,
-                $secret
-            );
+            $event = Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (\UnexpectedValueException $e) {
+            Log::error('Stripe webhook invalid payload');
             return response('Invalid payload', 400);
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            Log::error('Stripe webhook invalid signature');
             return response('Invalid signature', 400);
         }
 
-        // Handle the event
-        switch ($event->type) {
-            case 'account.updated':
-                $this->handleAccountUpdated($event->data->object);
-                break;
+        // 2️⃣ Prevent duplicate webhook processing
+        $alreadyProcessed = DB::table('stripe_webhook_events')
+            ->where('event_id', $event->id)
+            ->exists();
 
-            case 'payout.paid':
-                $this->handlePayoutPaid($event->data->object);
-                break;
-
-            case 'payout.failed':
-                $this->handlePayoutFailed($event->data->object);
-                break;
-
-            case 'payout.canceled':
-                $this->handlePayoutCanceled($event->data->object);
-                break;
-
-            default:
-                Log::info('Unhandled Stripe event', [
-                    'type' => $event->type
-                ]);
+        if ($alreadyProcessed) {
+            Log::info('Stripe webhook already processed', ['event_id' => $event->id]);
+            return response()->json(['status' => 'already_processed']);
         }
 
-        // Return a 200 response
-        return response('Webhook handled', 200);
+        // 3️⃣ Save event to DB
+        DB::table('stripe_webhook_events')->insert([
+            'event_id'    => $event->id,
+            'type'        => $event->type,
+            'object_id'   => $event->data->object->id ?? null,
+            'object_type' => $event->data->object->object ?? null,
+            'payload'     => json_encode($event->data->object),
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+        Log::info('Stripe webhook processed', ['event_id' => $event->id]);
+
+        // 4️⃣ Route event
+        try {
+            switch ($event->type) {
+                // Account onboarding
+                // case 'account.updated':
+                //     $this->handleAccountUpdated($event->data->object);
+                //     break;
+
+                // Transfer events
+                case 'transfer.created':
+                case 'transfer.paid':
+                case 'transfer.failed':
+                case 'transfer.reversed':
+                    $this->handleTransferEvents($event);
+                    break;
+                                // Payout events
+                case 'payout.paid':
+                case 'payout.failed':
+                case 'payout.canceled':
+                    $this->handlePayoutEvents($event);
+                    break;
+
+                default:
+                    Log::info('Unhandled Stripe event', ['type' => $event->type]);
+                    break;
+            }
+        } catch (\Exception $e) {
+            Log::error('Stripe webhook processing failed', [
+                'event_type' => $event->type,
+                'message'    => $e->getMessage()
+            ]);
+            return response('Webhook processing failed', 500);
+        }
+
+        return response()->json(['status' => 'success']);
     }
 
-    /**
-     * Creator onboarding / payout availability
-     */
+    // Update user onboarding status
     protected function handleAccountUpdated($account)
     {
-        Log::info('Stripe account.updated received', ['account_id' => $account->id]);
-        // Find the user by Stripe account ID
         $user = User::where('stripe_user_id', $account->id)->first();
-
-        if (!$user) {
-            Log::warning('Stripe account.updated: user not found', [
-                'stripe_account_id' => $account->id,
-            ]);
-            return;
-        }
+        if (!$user) return;
 
         $user->update([
-            'stripe_onboarded' => (bool) $account->payouts_enabled,
+            'stripe_onboarded' => (bool) $account->payouts_enabled
         ]);
+
+        Log::info('Stripe account.updated processed', ['account_id' => $account->id]);
     }
 
-    /**
-     * ✅ Payout success (money reached bank)
-     */
-    protected function handlePayoutPaid($stripePayout)
+    // Handle payout events
+    protected function handlePayoutEvents($event)
     {
-        Log::info('Stripe payout.paid received', ['payout_id' => $stripePayout->id]);
-        $payout = Payout::where('stripe_payout_id', $stripePayout->id)->first();
-
-        if (!$payout || $payout->status === 'completed') {
-            return;
-        }
-
-        DB::transaction(function () use ($payout, $stripePayout) {
-
-            $payout->update([
-                'status'   => 'paid',
-                'paid_at'  => now(),
-            ]);
-        });
-    }
-
-    /**
-     * ❌ Bank payout failed → refund wallet
-     */
-    protected function handlePayoutFailed($stripePayout)
-    {
-        log::info('Stripe payout.failed received', ['payout_id' => $stripePayout->id]);
-        $payout = Payout::where('stripe_payout_id', $stripePayout->id)->first();
-        if (!$payout || $payout->status === 'failed') return;
-
-        DB::transaction(function () use ($payout) {
-
-            $wallet = $payout->wallet;
-            WalletTransaction::create([
-                'wallet_id'      => $wallet->id,
-                'type'           => 'credit',
-                'source'         => 'payout_failed',
-                'amount'         => $payout->amount,
-                'balance_before' => $wallet->balance,
-                'balance_after'  => $wallet->balance + $payout->amount,
-                'status'         => 'completed',
-                'metadata'       => [
-                    'reason' => 'stripe_payout_failed',
-                ],
-            ]);
-            $wallet->increment('balance', $payout->amount);
-
-            $payout->update([
-                'status' => 'failed',
-            ]);
-        });
-    }
-
-    /**
-     * ❌ Payout canceled → refund wallet
-     */
-    protected function handlePayoutCanceled($stripePayout)
-    {
-        log::info('Stripe payout.canceled received', ['payout_id' => $stripePayout->id]);
+        $stripePayout = $event->data->object;
         $payout = Payout::where('stripe_payout_id', $stripePayout->id)->first();
         if (!$payout) return;
 
-        DB::transaction(function () use ($payout) {
-
+        DB::transaction(function () use ($payout, $event) {
             $wallet = $payout->wallet;
+            $balanceBefore = $wallet->balance;
+            $balanceAfter  = $balanceBefore + $payout->amount;
 
-            WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'type'      => 'credit',
-                'source'    => 'payout_canceled',
-                'amount'    => $payout->amount,
-                'balance_before' => $wallet->balance,
-                'balance_after'  => $wallet->balance + $payout->amount,
-                'status'    => 'completed',
-                'metadata'       => [
-                    'reason' => 'Payout cancelled',
-                ],
-            ]);
-            $wallet->increment('balance', $payout->amount);
+            switch ($event->type) {
+                case 'payout.paid':
+                    if ($payout->status !== 'paid') {
+                        $payout->update(['status' => 'paid', 'paid_at' => now()]);
+                    }
+                    break;
 
-            $payout->update([
-                'status' => 'cancelled',
-            ]);
+                case 'payout.failed':
+                    if ($payout->status !== 'failed') {
+                        $this->refundWallet($wallet, $payout, 'stripe_payout_failed');
+                        $payout->update(['status' => 'failed']);
+                    }
+                    break;
+
+                case 'payout.canceled':
+                    if ($payout->status !== 'cancelled') {
+                        $this->refundWallet($wallet, $payout, 'stripe_payout_canceled');
+                        $payout->update(['status' => 'cancelled']);
+                    }
+                    break;
+            }
         });
+    }
+
+    // Handle transfer events
+    protected function handleTransferEvents($event)
+    {
+        $transfer = $event->data->object;
+        $payout = Payout::where('transfer_id', $transfer->id)->first();
+        if (!$payout) return;
+
+        DB::transaction(function () use ($payout, $transfer, $event) {
+            $wallet = $payout->wallet;
+            $balanceBefore = $wallet->balance;
+            $balanceAfter  = $balanceBefore + $payout->amount;
+
+            switch ($event->type) {
+                case 'transfer.created':
+                    if ($payout->status !== 'transfer_initiated') {
+                        $payout->update(['status' => 'transfer_initiated']);
+                    }
+                    break;
+
+                case 'transfer.paid':
+                    if ($payout->status !== 'transfered') {
+                        $payout->update(['status' => 'transfered']);
+                    }
+                    break;
+
+                case 'transfer.failed':
+                    if ($payout->status !== 'failed') {
+                        $this->refundWallet($wallet, $payout, 'stripe_transfer_failed');
+                        $payout->update(['status' => 'failed']);
+                    }
+                    break;
+
+                case 'transfer.reversed':
+                    if ($payout->status !== 'reversed') {
+                        $this->refundWallet($wallet, $payout, 'stripe_transfer_reversed');
+                        $payout->update(['status' => 'reversed']);
+                    }
+                    break;
+            }
+        });
+    }
+
+    // Refund wallet helper
+    protected function refundWallet($wallet, $payout, $reason)
+    {
+        WalletTransaction::create([
+            'wallet_id'      => $wallet->id,
+            'type'           => 'credit',
+            'source'         => $reason,
+            'amount'         => $payout->amount,
+            'balance_before' => $wallet->balance,
+            'balance_after'  => $wallet->balance + $payout->amount,
+            'status'         => 'completed',
+            'metadata'       => ['payout_id' => $payout->id, 'reason' => $reason]
+        ]);
+
+        $wallet->increment('balance', $payout->amount);
     }
 }

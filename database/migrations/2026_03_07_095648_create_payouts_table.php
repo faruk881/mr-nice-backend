@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('currency', 3)->default('USD');
 
             $table->enum('method', ['stripe']);
-            $table->enum('status', ['requested','approved','processing','paid','failed','cancelled','rejected','funded'])->default('requested');
+            $table->enum('status', ['requested','approved','processing','paid','transfer_initiated','transferred','failed','cancelled','reversed','rejected','funded'])->default('requested');
 
             $table->string('stripe_payout_id')->nullable();
             $table->string('transfer_id')->nullable();

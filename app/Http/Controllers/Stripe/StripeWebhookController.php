@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
 use App\Notifications\OrderStatusNotification;
-use Stripe\Stripe;
 use Stripe\Webhook;
 use Stripe\StripeClient;
 use Exception;
@@ -17,35 +16,36 @@ class StripeWebhookController extends Controller
 {
     protected $stripe;
 
-    public function __construct() 
+    public function __construct()
     {
-        // Initialize the Stripe Client once for use in all methods
         $this->stripe = new StripeClient(config('services.stripe.secret'));
     }
 
     /**
-     * Main entry point for the Stripe Webhook.
+     * Main Stripe webhook handler
      */
-    public function handleWebhook(Request $request) 
+    public function handleWebhook(Request $request)
     {
-        Log::info('Received Stripe Webhook', ['payload' => $request->getContent()]);
-
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-        $endpointSecret = config('services.stripe.webhook_secret');
+        $secret = config('services.stripe.webhook_secret');
 
-        // 1. Verify the Webhook Signature
+        Log::info('Stripe webhook received');
+
         try {
-            $event = Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
+            $event = Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (\UnexpectedValueException $e) {
+            Log::error('Invalid Stripe webhook payload');
             return response()->json(['error' => 'Invalid payload'], 400);
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            Log::error('Invalid Stripe webhook signature');
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
-        // 2. Route the event to the appropriate handler
         try {
+
             switch ($event->type) {
+
                 case 'checkout.session.completed':
                     $this->handleCheckoutSessionCompleted($event->data->object);
                     break;
@@ -59,11 +59,18 @@ class StripeWebhookController extends Controller
                     break;
 
                 default:
-                    Log::info('Unhandled Stripe event type: ' . $event->type);
-                    break;
+                    Log::info('Unhandled Stripe event', [
+                        'type' => $event->type
+                    ]);
             }
+
         } catch (Exception $e) {
-            Log::error('Stripe Webhook Handling Error: ' . $e->getMessage(), ['event' => $event->id]);
+
+            Log::error('Stripe webhook processing error', [
+                'event' => $event->id,
+                'message' => $e->getMessage()
+            ]);
+
             return response()->json(['error' => 'Webhook handling failed'], 500);
         }
 
@@ -71,21 +78,23 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * Handler: checkout.session.completed
-     * Fired when a Checkout session is finished successfully.
+     * checkout.session.completed
      */
-    protected function handleCheckoutSessionCompleted($session) 
+    protected function handleCheckoutSessionCompleted($session)
     {
-        Log::info('Handling checkout.session.completed', ['session_id' => $session->id]);
+        Log::info('checkout.session.completed', [
+            'session_id' => $session->id
+        ]);
+
         $payment = Payment::where('stripe_checkout_session_id', $session->id)->first();
 
         if (!$payment) {
-            Log::error('Payment not found for Checkout Session', ['session_id' => $session->id]);
+            Log::warning('Payment not found for checkout session', [
+                'session_id' => $session->id
+            ]);
             return;
         }
 
-        // Expand payment_method to get card details (brand, last4)
-        // Expand latest_charge to get the real 'ch_...' ID
         $paymentIntent = $this->stripe->paymentIntents->retrieve(
             $session->payment_intent,
             ['expand' => ['payment_method', 'latest_charge']]
@@ -95,21 +104,23 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * Handler: payment_intent.succeeded
-     * Fired when a PaymentIntent is successfully authorized and captured.
+     * payment_intent.succeeded
      */
-    protected function handlePaymentIntentSucceeded($paymentIntent) 
+    protected function handlePaymentIntentSucceeded($paymentIntent)
     {
-        Log::info('Handling payment_intent.succeeded', ['pi' => $paymentIntent->id]);
+        Log::info('payment_intent.succeeded', [
+            'pi' => $paymentIntent->id
+        ]);
+
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
         if (!$payment) {
-            // Log as info; this might happen if CheckoutSession handler finished first
-            Log::info('Payment record not found for PaymentIntent ID', ['pi' => $paymentIntent->id]);
+            Log::info('Payment record not found for payment intent', [
+                'pi' => $paymentIntent->id
+            ]);
             return;
         }
 
-        // Ensure we have the expanded payment method details
         if (is_string($paymentIntent->payment_method)) {
             $paymentIntent = $this->stripe->paymentIntents->retrieve(
                 $paymentIntent->id,
@@ -121,75 +132,91 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * Core logic to finalize successful payments.
-     * Uses DB Transaction to ensure Payment and Order are updated together.
+     * Finalize successful payment
      */
     protected function processSuccess($payment, $paymentIntent)
     {
-        Log::info('Processing successful payment', ['payment_id' => $payment->id, 'payment_intent_id' => $paymentIntent->id]);
-        // 1. Idempotency Check: Don't process if already marked as succeeded
         if ($payment->status === 'succeeded') {
+            Log::info('Payment already processed', [
+                'payment_id' => $payment->id
+            ]);
             return;
         }
 
         DB::transaction(function () use ($payment, $paymentIntent) {
-            // Extract Card Details safely
+
             $cardBrand = null;
             $cardLast4 = null;
-            
-            if ($paymentIntent->payment_method && $paymentIntent->payment_method->type === 'card') {
+
+            if (
+                $paymentIntent->payment_method &&
+                $paymentIntent->payment_method->type === 'card'
+            ) {
                 $cardBrand = $paymentIntent->payment_method->card->brand;
                 $cardLast4 = $paymentIntent->payment_method->card->last4;
             }
 
-            // 2. Update Payment Record
             $payment->update([
-                'status'           => 'succeeded',
+                'status' => 'succeeded',
                 'stripe_charge_id' => $paymentIntent->latest_charge->id ?? null,
-                'payment_method'   => $paymentIntent->payment_method->type ?? 'card',
-                // 'card_type'        => $cardBrand,
-                // 'card_last4'       => $cardLast4,
-                'stripe_response'  => json_encode($paymentIntent),
+                'payment_method' => $paymentIntent->payment_method->type ?? 'card',
+                'stripe_response' => json_encode($paymentIntent),
             ]);
 
-            // 3. Update Order Record
-            if ($payment->order) {
-                $order = $payment->order;
-                $payment->order->update([
-                    'is_paid' => true,
-                    'status'  => 'pending'
+            $order = $payment->order;
+
+            if (!$order) {
+                Log::warning('Order not found for payment', [
+                    'payment_id' => $payment->id
                 ]);
+                return;
             }
 
-            // 4. Notify Customer 
-            if ($order->customer) { 
-                $order->customer->notify( 
-                    new OrderStatusNotification($order, 'pending') 
-                ); 
+            $order->update([
+                'is_paid' => true,
+                'status' => 'pending'
+            ]);
+
+            if ($order->customer) {
+                $order->customer->notify(
+                    new OrderStatusNotification($order, 'pending')
+                );
             }
 
         });
 
-        Log::info('Payment processed successfully', ['payment_id' => $payment->id]);
+        Log::info('Payment processed successfully', [
+            'payment_id' => $payment->id
+        ]);
     }
 
     /**
-     * Handler: payment_intent.payment_failed
+     * payment_intent.payment_failed
      */
-    protected function handlePaymentIntentFailed($paymentIntent) 
+    protected function handlePaymentIntentFailed($paymentIntent)
     {
-        Log::info('Handling payment_intent.payment_failed', ['pi' => $paymentIntent->id]);
+        Log::info('payment_intent.payment_failed', [
+            'pi' => $paymentIntent->id
+        ]);
+
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
-        if ($payment) {
-            $payment->update([
-                'status' => 'failed',
-                'stripe_response' => json_encode($paymentIntent),
+        if (!$payment) {
+            Log::warning('Payment not found for failed payment intent', [
+                'pi' => $paymentIntent->id
             ]);
+            return;
+        }
 
-            if ($payment->order) {
-                $payment->order->update(['status' => 'failed']);
-            }
+        $payment->update([
+            'status' => 'failed',
+            'stripe_response' => json_encode($paymentIntent),
+        ]);
+
+        if ($payment->order) {
+            $payment->order->update([
+                'status' => 'failed'
+            ]);
         }
     }
 }

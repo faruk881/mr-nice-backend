@@ -46,17 +46,28 @@ class CourierPayoutsController extends Controller
 
             // Check if stripe account is connected
             if(!$courier->stripe_user_id) {
-                return apiError('Stripe account is not connected',409);
+                $error = [
+                    'stripe-account-status' => 'not-connected',
+                ];
+                return apiError('Stripe account is not connected',409,$error);
             }
 
             // Check minimum payout amount
             if( $payoutAmount < $minAmount ) {
-                return apiError('Minimum payout amount is '.$minAmount.' USD', 422);
+                
+                $error = [
+                    'min_amount' => 'false'
+                ];
+                return apiError('Minimum payout amount is '.$minAmount.' USD', 422,$error);
             }
 
             // Check maximum payout amount
             if( $payoutAmount > $maxAmount ) {
-                return apiError('The maximum payout amount is '.$maxAmount.' USD', 422);
+                
+                $error = [
+                    'max_amount' => 'false'
+                ];
+                return apiError('The maximum payout amount is '.$maxAmount.' USD', 422,$error);
             }
 
 
