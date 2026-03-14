@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AdminGetCouriersRequest extends FormRequest
+class AdminUpdateUsersStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,20 +22,15 @@ class AdminGetCouriersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => 'nullable|string|max:255',
-            'per_page' => 'nullable|integer|min:1|max:100',
-            'sort' => 'nullable|string|in:created_at,updated_at',
+            'status' => 'required|in:suspended,active',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'search.string' => 'The search must be a string',
-            'per_page.integer' => 'The per page must be an integer',
-            'per_page.min' => 'The per page must be at least 1',
-            'per_page.max' => 'The per page must be at most 100',
-            'sort.string' => 'The sort must be a string',
+            'status.required' => 'Status is required.',
+            'status.in' => 'Status must be either suspended or active.',
         ];
     }
 }

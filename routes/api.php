@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminCourierController;
+use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminCourierPayoutsController;
+use App\Http\Controllers\Admin\AdminCustomerController;
+use App\Http\Controllers\Admin\AdminDashboardStatsController;
 use App\Http\Controllers\Admin\AdminFaqController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminOrderRefundController;
@@ -149,6 +151,7 @@ Route::prefix('courier')->group(function(){
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
+    Route::get('/dashboard-stats',[AdminDashboardStatsController::class,'index'])->name('admin.dashboard-stats');
     // Delivery
     Route::get('/deliveries', [DeliveryApprovalController::class, 'index'])->name('admin.deliveries.index');
     Route::patch('/deliveries/{id}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
@@ -167,9 +170,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
     Route::patch('/delivery-pricing-settings/base-fare', [DeliveryFeeSettingController::class, 'updateBaseFare'])->name('admin.delivery-pricing-settings.update-base-fare');
 
-    // Courier id verification
-    Route::patch('/couriers/{courier}/verification', [AdminCourierController::class, 'verify'])->name('admin.couriers.verification.update');
-    Route::get('/couriers',[AdminCourierController::class,'index'])->name('admin.couriers.index');
+    // Manage Couriers
+    Route::get('/users',[AdminUsersController::class,'index'])->name('admin.users.index');
+    Route::patch('/couriers/{courier}/verification', [AdminUsersController::class, 'updateVerification'])->name('admin.couriers.update.verification');
+    Route::patch('/users/{user}/status', [AdminUsersController::class, 'updateStatus'])->name('admin.users.update.status');
+
 
     // Payout Thrseholds
     Route::get('/payout-thrseholds',[PayoutThrseholdsController::class,'index'])->name('admin.payout-thrseholds.index');
