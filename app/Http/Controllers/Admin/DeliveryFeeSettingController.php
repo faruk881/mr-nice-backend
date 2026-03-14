@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateBaseFareRequest;
 use App\Http\Requests\Settings\UpdateDistanceFeeRequest;
 use App\Http\Requests\Settings\UpdateItemTypeFeeRequest;
 use App\Models\DeliveryFeeSetting;
@@ -80,6 +81,38 @@ class DeliveryFeeSettingController extends Controller
 
             // Return
             return apiSuccess('Distance fees updated successfully', $prices);
+        } catch(\Throwable $e) {
+            throw $e;
+        }
+        
+    }
+    public function updateBaseFare(UpdateBaseFareRequest $request){
+        try {
+            // Get the first (and only) pricing row
+            $prices = DeliveryFeeSetting::first();
+
+            // Check if price exists
+            if (!$prices) {
+                return apiError('Delivery fees settings not found', 404);
+            }
+
+            // Check if same package price entered
+            if($prices->base_fare == $request->input('base_fare')){
+                $error = [
+                    'base_fare' => 'same'
+                ];
+                return apiError('You entered same fees.', 400, $error);
+            }
+
+
+            // Update the price
+            $prices->update([
+                'base_fare' => $request->input('base_fare'),
+                'updated_by' => auth()->user()->id
+            ]);
+
+            // Return
+            return apiSuccess('base fare updated successfully', $prices);
         } catch(\Throwable $e) {
             throw $e;
         }

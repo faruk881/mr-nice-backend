@@ -165,6 +165,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::get('/delivery-pricing-settings', [DeliveryFeeSettingController::class, 'index'])->name('admin.delivery-pricing-settings.index');
     Route::patch('/delivery-pricing-settings/distance', [DeliveryFeeSettingController::class, 'updateDistanceFee'])->name('admin.delivery-pricing-settings.update-distance');
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
+    Route::patch('/delivery-pricing-settings/base-fare', [DeliveryFeeSettingController::class, 'updateBaseFare'])->name('admin.delivery-pricing-settings.update-base-fare');
 
     // Courier id verification
     Route::patch('/couriers/{courier}/verification', [AdminCourierController::class, 'verify'])->name('admin.couriers.verification.update');
