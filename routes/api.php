@@ -170,7 +170,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/item-type', [DeliveryFeeSettingController::class, 'updateItemTypeFee'])->name('admin.delivery-pricing-settings.update-item-type');
     Route::patch('/delivery-pricing-settings/base-fare', [DeliveryFeeSettingController::class, 'updateBaseFare'])->name('admin.delivery-pricing-settings.update-base-fare');
 
-    // Manage Couriers
+    // Manage Users
     Route::get('/users',[AdminUsersController::class,'index'])->name('admin.users.index');
     Route::patch('/couriers/{courier}/verification', [AdminUsersController::class, 'updateVerification'])->name('admin.couriers.update.verification');
     Route::patch('/users/{user}/status', [AdminUsersController::class, 'updateStatus'])->name('admin.users.update.status');

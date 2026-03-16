@@ -19,12 +19,17 @@ class AdminUsersController extends Controller
         $perPage  = $request->input('per_page', 10);
         $sort     = $request->input('sort', 'created_at');
         $userType = $request->input('user_type');
+        $filter   = $request->input('filter');
     
         $query = User::query();
     
         // Filter by role
         $query->whereHas('roles', function ($q) use ($userType) {
             $q->where('name', $userType);
+        });
+
+        $query->when($filter, function ($q) use ($filter) {
+            $q->where('status', $filter);
         });
     
         // Search filter
@@ -110,7 +115,7 @@ class AdminUsersController extends Controller
     }
 
     /**
-     * Update courier status
+     * Update users status
      */
     public function updateStatus(AdminUpdateUsersStatusRequest $request, string $id)
     {
@@ -123,7 +128,7 @@ class AdminUsersController extends Controller
             })
             ->first();
 
-        // Courier not found
+        // User not found
         if (!$user) {
             return apiError(
                 'User not found.',
@@ -135,7 +140,7 @@ class AdminUsersController extends Controller
         // Same status check
         if ($user->status === $status) {
             return apiError(
-                "This courier is already {$status}.",
+                "This user is already {$status}.",
                 422,
                 ['code' => 'SAME_USER_STATUS']
             );

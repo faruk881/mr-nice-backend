@@ -26,6 +26,7 @@ class AdminGetUsersRequest extends FormRequest
             'search' => 'nullable|string|max:255',
             'per_page' => 'nullable|integer|min:1|max:100',
             'sort' => 'nullable|string|in:created_at,updated_at',
+            'filter' => 'nullable|string|in:active,suspended'
         ];
     }
 
@@ -40,6 +41,9 @@ class AdminGetUsersRequest extends FormRequest
             'per_page.min' => 'The per page must be at least 1',
             'per_page.max' => 'The per page must be at most 100',
             'sort.string' => 'The sort must be a string',
+
+            'filter.string' => 'The filter must be a string',
+            'filter.in' => 'The filter must be either active or suspended'
         ];
     }
 }
