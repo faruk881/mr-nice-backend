@@ -71,9 +71,9 @@ class CourierEarningsController extends Controller
             ->where('type', 'credit')
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->selectRaw('DAYNAME(created_at) as day, SUM(amount) as total')
-            ->groupBy('day')
-            ->orderByRaw('MIN(created_at)')
+            ->selectRaw('DATE(created_at) as date, DAYNAME(created_at) as day, SUM(amount) as total')
+            ->groupBy('date', 'day')
+            ->orderBy('date')
             ->get();
 
         // 04.2. Earning Trend Monthly

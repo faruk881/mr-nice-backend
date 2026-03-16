@@ -52,8 +52,8 @@ class AdminDashboardStatsController extends Controller
             ->where('type', 'credit')
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->selectRaw('DAYNAME(created_at) as day, SUM(amount) as total')
-            ->groupBy('day')
+            ->selectRaw('DATE(created_at) as date, DAYNAME(created_at) as day, SUM(amount) as total')
+            ->groupBy('date','day')
             ->orderByRaw('MIN(created_at)')
             ->get();
 

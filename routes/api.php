@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminActivityStatsController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminCourierPayoutsController;
 use App\Http\Controllers\Admin\AdminCustomerController;
@@ -151,7 +152,10 @@ Route::prefix('courier')->group(function(){
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
+    // Dashboard
     Route::get('/dashboard-stats',[AdminDashboardStatsController::class,'index'])->name('admin.dashboard-stats');
+    Route::get('/activity-stats',[AdminActivityStatsController::class,'index'])->name('admin.activity-stats');
+
     // Delivery
     Route::get('/deliveries', [DeliveryApprovalController::class, 'index'])->name('admin.deliveries.index');
     Route::patch('/deliveries/{id}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
