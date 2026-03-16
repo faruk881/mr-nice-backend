@@ -37,7 +37,8 @@ class AdminUsersController extends Controller
             $q->where(function ($sub) use ($search) {
                 $sub->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
             });
         });
     
