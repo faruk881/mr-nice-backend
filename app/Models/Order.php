@@ -21,6 +21,8 @@ class Order extends Model
         'per_km_fee'      => 'decimal:2',
         'package_fee'     => 'decimal:2',
         'total_fee'       => 'decimal:2',
+        'stripe_processing_fee' => 'decimal:2',
+        'net_amount'      => 'decimal:2',
 
         // Boolean
         'is_paid'         => 'boolean',
@@ -55,14 +57,14 @@ class Order extends Model
         }
 
         if ($settings->active_commission === 'commission_percent') {
-            return round($this->total_fee - ($this->total_fee * $settings->commission_percent) / 100, 2);
+            return round($this->net_amount - ($this->net_amount * $settings->commission_percent) / 100, 2);
         }
 
-        if ($settings->active_commission === 'commission_amount' && $this->total_fee < $settings->commission_amount) {
+        if ($settings->active_commission === 'commission_amount' && $this->net_amount < $settings->commission_amount) {
             return null;
         }
         if ($settings->active_commission === 'commission_amount') {
-            return $this->total_fee - $settings->commission_amount;
+            return $this->net_amount - $settings->commission_amount;
         }
 
         return null;
@@ -79,9 +81,9 @@ class Order extends Model
         }
 
         if ($settings->active_commission === 'commission_percent') {
-            return round(($this->total_fee * $settings->commission_percent) / 100, 2);
+            return round(($this->net_amount * $settings->commission_percent) / 100, 2);
         }
-        if ($settings->active_commission === 'commission_amount' && $this->total_fee < $settings->commission_amount) {
+        if ($settings->active_commission === 'commission_amount' && $this->net_amount < $settings->commission_amount) {
             return null;
         }
         if ($settings->active_commission === 'commission_amount') {

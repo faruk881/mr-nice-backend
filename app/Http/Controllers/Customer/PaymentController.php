@@ -7,6 +7,7 @@ use App\Http\Requests\Customer\PaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Stripe\PaymentMethod;
 use Stripe\Stripe;
 use Stripe\Customer as StripeCustomer;
@@ -107,58 +108,79 @@ class PaymentController extends Controller
 
         // 3. Handle Payment Intent
         if ($paymentMode === 'intent') {
-            $payment = $order->payments()
-                ->whereNotNull('stripe_payment_intent_id')
-                ->where('status', 'pending')
-                ->latest()
-                ->first();
 
-            $createNewIntent = true;
 
-            if ($payment) {
-                try {
-                    $paymentIntent = PaymentIntent::retrieve($payment->stripe_payment_intent_id);
-                    if (in_array($paymentIntent->status, ['requires_payment_method', 'requires_confirmation'])) {
-                        $createNewIntent = false;
+            // 1. Use an Atomic Lock to prevent two requests from processing the same order simultaneously
+            return Cache::lock('payment_intent_lock_' . $order->id, 10)->get(function () use ($order, $stripeCustomer, $user) {
+
+                $amountCents = (int) ($order->total_fee * 100);
+                $createNewIntent = true;
+                $paymentIntent = null;
+
+                // 2. Look for an existing pending record
+                $payment = $order->payments()
+                    ->whereNotNull('stripe_payment_intent_id')
+                    ->where('status', 'pending')
+                    ->latest()
+                    ->first();
+
+                if ($payment) {
+                    try {
+                        $paymentIntent = PaymentIntent::retrieve($payment->stripe_payment_intent_id);
+
+                        // 3. If valid status, reuse it. If amount changed, update it.
+                        if (in_array($paymentIntent->status, ['requires_payment_method', 'requires_confirmation'])) {
+                            $createNewIntent = false;
+
+                            if ($paymentIntent->amount !== $amountCents) {
+                                $paymentIntent = PaymentIntent::update($paymentIntent->id, [
+                                    'amount' => $amountCents
+                                ]);
+                            }
+                        }
+                    } catch (\Stripe\Exception\ApiErrorException $e) {
+                        $createNewIntent = true;
                     }
-                } catch (\Exception $e) {
-                    $createNewIntent = true;
                 }
-            }
 
-            if ($createNewIntent) {
-                $paymentIntent = PaymentIntent::create([
-                    'amount' => $order->total_fee * 100,
-                    'currency' => 'chf',
-                    'customer' => $stripeCustomer->id,
-                    'payment_method_types' => ['card', 'twint'],
-                    'metadata' => [
-                        'order_id' => $order->id,
-                        'customer_id' => $user->id,
-                    ],
+                // 4. Create new intent with Idempotency Key for extra safety
+                if ($createNewIntent) {
+                    $paymentIntent = PaymentIntent::create([
+                        'amount'               => $amountCents,
+                        'currency'             => 'chf',
+                        'customer'             => $stripeCustomer->id,
+                        'payment_method_types' => ['card', 'twint'],
+                        'metadata'             => [
+                            'order_id'    => $order->id,
+                            'customer_id' => $user->id,
+                        ],
+                    ], [
+                        // Prevents Stripe from creating a duplicate if the API is hit twice
+                        'idempotency_key' => 'pi_order_' . $order->id . '_v1',
+                    ]);
+                }
+
+                // 5. Sync your local database
+                $payment = $this->savePaymentRecord($payment, $order, $stripeCustomer->id, [
+                    'stripe_payment_intent_id' => $paymentIntent->id,
+                    'status'                   => 'pending',
+                    'amount'                   => $order->total_fee,
+                    'currency'                 => 'chf',
                 ]);
-            }
 
-            $payment = $this->savePaymentRecord($payment, $order, $stripeCustomer->id, [
-                'stripe_payment_intent_id' => $paymentIntent->id,
-                'status' => 'pending',
-                'amount' => $order->total_fee,
-                'currency' => 'chf',
-            ]);
+                // 6. Fetch saved cards
+                $savedCards = PaymentMethod::all([
+                    'customer' => $stripeCustomer->id,
+                    'type'     => 'card',
+                ]);
 
-            // Fetch saved cards
-            $savedCards = PaymentMethod::all([
-                'customer' => $stripeCustomer->id,
-                'type' => 'card',
-            ]);
-            
-
-            return apiSuccess('Payment intent created successfully.', [
-                'type' => 'intent',
-                'publishable_key' => config('services.stripe.publishable'),
-                'client_secret' => $paymentIntent->client_secret,
-                'saved_cards' => $savedCards->data, 
-            ]);
+                return apiSuccess('Payment intent ready.', [
+                    'type'            => 'intent',
+                    'publishable_key' => config('services.stripe.publishable'),
+                    'client_secret'   => $paymentIntent->client_secret,
+                    'saved_cards'     => $savedCards->data,
+                ]);
+            });
         }
 
         return apiError('Invalid payment mode.', 400);

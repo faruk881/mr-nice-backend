@@ -9,7 +9,9 @@ class Payout extends Model
     protected $guarded = ['id'];
     
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount'          => 'decimal:2',
+        'stripe_processing_fee'      => 'decimal:2',
+        'net_amount'      => 'decimal:2',
     ];
 
 

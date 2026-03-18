@@ -35,12 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $status = 500;
             $message = 'Backend server error.';
+            $code = "BACKEND_SERVER_ERROR";
             $errors = [];
 
             // Validation error
             if ($e instanceof \Illuminate\Validation\ValidationException) {
                 $status = 422;
                 $message = 'Something went wrong.';
+                $code = 'VALIDATION_ERROR';
                 $errors = $e->errors();
             }
 
@@ -48,12 +50,15 @@ return Application::configure(basePath: dirname(__DIR__))
             elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 $status = 404;
                 $message = 'Resource not found.';
+                $code = 'RESOURCE_NOT_FOUND';
+
             }
 
             // Authentication
             elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
                 $status = 401;
                 $message = 'Unauthenticated.';
+                $code = 'UNAUTHENTICATED';
             }
 
             // Debug mode
@@ -67,6 +72,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'status'  => 'error',
                 'message' => $message,
+                'code'    => $code,
                 'errors'  => $errors,
             ], $status);
         // }

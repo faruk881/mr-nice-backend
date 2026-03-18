@@ -21,9 +21,6 @@ class StripeWebhookController extends Controller
         $this->stripe = new StripeClient(config('services.stripe.secret'));
     }
 
-    /**
-     * Main Stripe webhook handler
-     */
     public function handleWebhook(Request $request)
     {
         $payload = $request->getContent();
@@ -43,15 +40,14 @@ class StripeWebhookController extends Controller
         }
 
         try {
-
             switch ($event->type) {
-
                 case 'checkout.session.completed':
                     $this->handleCheckoutSessionCompleted($event->data->object);
                     break;
 
                 case 'payment_intent.succeeded':
-                    $this->handlePaymentIntentSucceeded($event->data->object);
+                case 'charge.succeeded': // Both events lead to the same success logic
+                    $this->handlePaymentSuccess($event->data->object);
                     break;
 
                 case 'payment_intent.payment_failed':
@@ -59,18 +55,13 @@ class StripeWebhookController extends Controller
                     break;
 
                 default:
-                    Log::info('Unhandled Stripe event', [
-                        'type' => $event->type
-                    ]);
+                    Log::info('Unhandled Stripe event', ['type' => $event->type]);
             }
-
         } catch (Exception $e) {
-
             Log::error('Stripe webhook processing error', [
                 'event' => $event->id,
                 'message' => $e->getMessage()
             ]);
-
             return response()->json(['error' => 'Webhook handling failed'], 500);
         }
 
@@ -78,145 +69,114 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * checkout.session.completed
+     * Handle Checkout Session
      */
     protected function handleCheckoutSessionCompleted($session)
     {
-        Log::info('checkout.session.completed', [
-            'session_id' => $session->id
-        ]);
-
         $payment = Payment::where('stripe_checkout_session_id', $session->id)->first();
 
         if (!$payment) {
-            Log::warning('Payment not found for checkout session', [
-                'session_id' => $session->id
-            ]);
+            Log::warning('Payment not found for session', ['id' => $session->id]);
             return;
         }
 
-        $paymentIntent = $this->stripe->paymentIntents->retrieve(
-            $session->payment_intent,
-            ['expand' => ['payment_method', 'latest_charge']]
-        );
-
-        $this->processSuccess($payment, $paymentIntent);
+        $this->retrieveAndProcess($payment, $session->payment_intent);
     }
 
     /**
-     * payment_intent.succeeded
+     * Handle PI and Charge Success
      */
-    protected function handlePaymentIntentSucceeded($paymentIntent)
+    protected function handlePaymentSuccess($object)
     {
-        Log::info('payment_intent.succeeded', [
-            'pi' => $paymentIntent->id
-        ]);
+        // Normalize the Payment Intent ID
+        $piId = ($object->object === 'charge') ? $object->payment_intent : $object->id;
 
-        $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+        $payment = Payment::where('stripe_payment_intent_id', $piId)->first();
 
         if (!$payment) {
-            Log::info('Payment record not found for payment intent', [
-                'pi' => $paymentIntent->id
-            ]);
+            Log::info('Payment record not found for PI', ['pi' => $piId]);
             return;
         }
 
-        if (is_string($paymentIntent->payment_method)) {
-            $paymentIntent = $this->stripe->paymentIntents->retrieve(
-                $paymentIntent->id,
-                ['expand' => ['payment_method', 'latest_charge']]
-            );
-        }
-
-        $this->processSuccess($payment, $paymentIntent);
+        $this->retrieveAndProcess($payment, $piId);
     }
 
     /**
-     * Finalize successful payment
+     * Centralized retrieval with expansion and retry logic for fees
+     */
+    protected function retrieveAndProcess($payment, $paymentIntentId)
+    {
+        // 1. Retrieve with expansion
+        $pi = $this->stripe->paymentIntents->retrieve($paymentIntentId, [
+            'expand' => ['payment_method', 'latest_charge.balance_transaction']
+        ]);
+
+        // 2. Retry once if balance_transaction is still missing (Stripe timing issue)
+        if (empty($pi->latest_charge->balance_transaction)) {
+            sleep(2);
+            $pi = $this->stripe->paymentIntents->retrieve($paymentIntentId, [
+                'expand' => ['payment_method', 'latest_charge.balance_transaction']
+            ]);
+        }
+
+        $this->processSuccess($payment, $pi);
+    }
+
+    /**
+     * Finalize the database records
      */
     protected function processSuccess($payment, $paymentIntent)
     {
         if ($payment->status === 'succeeded') {
-            Log::info('Payment already processed', [
-                'payment_id' => $payment->id
-            ]);
             return;
         }
 
         DB::transaction(function () use ($payment, $paymentIntent) {
+            $charge = $paymentIntent->latest_charge;
+            $bt = $charge->balance_transaction ?? null;
 
-            $cardBrand = null;
-            $cardLast4 = null;
+            // Convert cents to decimal
+            $fee = $bt ? ($bt->fee / 100) : 0;
+            $net = $bt ? ($bt->net / 100) : ($paymentIntent->amount / 100);
 
-            if (
-                $paymentIntent->payment_method &&
-                $paymentIntent->payment_method->type === 'card'
-            ) {
-                $cardBrand = $paymentIntent->payment_method->card->brand;
-                $cardLast4 = $paymentIntent->payment_method->card->last4;
-            }
-
+            // Update Payment
             $payment->update([
                 'status' => 'succeeded',
-                'stripe_charge_id' => $paymentIntent->latest_charge->id ?? null,
+                'stripe_charge_id' => $charge->id ?? null,
                 'payment_method' => $paymentIntent->payment_method->type ?? 'card',
+                'stripe_processing_fee' => $fee,
+                'net_amount' => $net,
                 'stripe_response' => json_encode($paymentIntent),
             ]);
 
+            // Update Order
             $order = $payment->order;
-
-            if (!$order) {
-                Log::warning('Order not found for payment', [
-                    'payment_id' => $payment->id
+            if ($order) {
+                $order->update([
+                    'is_paid' => true,
+                    'status' => 'pending',
+                    'stripe_processing_fee' => $fee,
+                    'net_amount' => $net,
                 ]);
-                return;
+
+                if ($order->customer) {
+                    $order->customer->notify(new OrderStatusNotification($order, 'pending'));
+                }
             }
-
-            $order->update([
-                'is_paid' => true,
-                'status' => 'pending'
-            ]);
-
-            if ($order->customer) {
-                $order->customer->notify(
-                    new OrderStatusNotification($order, 'pending')
-                );
-            }
-
         });
 
-        Log::info('Payment processed successfully', [
-            'payment_id' => $payment->id
-        ]);
+        Log::info('Payment finalized', ['payment_id' => $payment->id, 'fee' => $paymentIntent->latest_charge->balance_transaction->fee ?? 0]);
     }
 
-    /**
-     * payment_intent.payment_failed
-     */
     protected function handlePaymentIntentFailed($paymentIntent)
     {
-        Log::info('payment_intent.payment_failed', [
-            'pi' => $paymentIntent->id
-        ]);
-
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
-        if (!$payment) {
-            Log::warning('Payment not found for failed payment intent', [
-                'pi' => $paymentIntent->id
-            ]);
-            return;
-        }
-
-        $payment->update([
-            'status' => 'failed',
-            'stripe_response' => json_encode($paymentIntent),
-        ]);
-
-        if ($payment->order) {
-            $payment->order->update([
-                'status' => 'failed'
-            ]);
+        if ($payment) {
+            $payment->update(['status' => 'failed']);
+            if ($payment->order) {
+                $payment->order->update(['status' => 'failed']);
+            }
         }
     }
 }

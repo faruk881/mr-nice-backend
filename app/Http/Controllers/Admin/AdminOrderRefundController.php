@@ -35,11 +35,12 @@ class AdminOrderRefundController extends Controller
             // Get the payment
             $payment = $order->payments()->where('status', 'succeeded')->latest()->first();
 
-            
             // Check if there is valid payment
             if (!$payment || !$payment->stripe_payment_intent_id) {
                 return apiError('No valid payment found to refund.', 400);
             }
+
+            $refundAmount = $payment->net_amount;
 
             // Refund the payment
             Stripe::setApiKey(config('services.stripe.secret'));
@@ -50,6 +51,8 @@ class AdminOrderRefundController extends Controller
                 // Create Stripe refund
                 $stripeRefund = StripeRefund::create([
                     'payment_intent' => $payment->stripe_payment_intent_id,
+                    'amount' => $refundAmount*100,
+                    'reason' => 'requested_by_customer',
                 ]);
 
                 // Update payment record
@@ -57,8 +60,12 @@ class AdminOrderRefundController extends Controller
                     'status' => 'refunded',
                     'stripe_response' => json_encode($stripeRefund),
                 ]);
+
+
                 $refund->update([
-                    'status' => 'succeeded'
+                    'status' => 'succeeded',
+                    'amount' => $refundAmount,
+                    'stripe_response' => json_encode($stripeRefund),
                 ]);
 
                 DB::commit();
@@ -72,7 +79,7 @@ class AdminOrderRefundController extends Controller
                     'payment_intent' => $payment->stripe_payment_intent_id,
                 ]);
 
-                return apiError('Refund failed. Please try again.', 500);
+                throw $e;
             }
         }
 
