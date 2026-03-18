@@ -50,7 +50,7 @@ class CourierOrderController extends Controller
 
         // Check if order exists and is pending
         if (!$order) {
-            return apiError('Order not found or already accepted.', 404);
+            return apiError('Order not found or already accepted.', 404, ['code'=>'ORDER_NOT_FOUND']);
         }
 
         // Return response
@@ -63,12 +63,12 @@ class CourierOrderController extends Controller
 
         // Check if order exists and is pending
         if (!$order) {
-            return apiError('Order not found or already accepted.', 404);
+            return apiError('Order not found or already accepted.', 404, ['code'=>'ORDER_NOT_FOUND']);
         }
 
         // Check if the courier accepting his own order.
         if($order->customer_id == auth()->id()) {
-            return apiError('You cannot accept your own order.', 422);
+            return apiError('You cannot accept your own order.', 422, ['code'=>'YOUR_ORDER']);
         }
         
         // Update the order

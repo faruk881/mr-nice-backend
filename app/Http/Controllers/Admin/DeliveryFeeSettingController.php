@@ -17,7 +17,7 @@ class DeliveryFeeSettingController extends Controller
 
         // Check if data exists
         if (!$prices) {
-            return apiError('Delivery pricing settings not found', 404);
+            return apiError('Delivery pricing settings not found', 404,['code'=>'DELIVERY_PRICING_SETTINGS_NOT_FOUND']);
         }
 
         // Return
@@ -31,12 +31,12 @@ class DeliveryFeeSettingController extends Controller
 
             // Check if price exists
             if (!$prices) {
-                return apiError('Delivery pricing settings not found', 404);
+                return apiError('Delivery pricing settings not found', 404,['code'=>'DELIVERY_PRICING_SETTINGS_NOT_FOUND']);
             }
 
             // Check if the price is same
             if ($prices->per_km_fee == $request->input('per_km_fee')) {
-                return apiError('You entered same fee.', 400);
+                return apiError('You entered same fee.', 400,['code'=>'SAME_FEE']);
             }
 
             // Update the price
@@ -60,14 +60,14 @@ class DeliveryFeeSettingController extends Controller
 
             // Check if price exists
             if (!$prices) {
-                return apiError('Delivery fees settings not found', 404);
+                return apiError('Delivery fees settings not found', 404 ,['code'=>'DELIVERY_FEES_SETTINGS_NOT_FOUND']);
             }
 
             // Check if same package price entered
             if($prices->small_package_fee == $request->input('small_package_fee') &&
                 $prices->medium_package_fee == $request->input('medium_package_fee') &&
                 $prices->large_package_fee == $request->input('large_package_fee')){
-                return apiError('You entered same fees.', 400);
+                return apiError('You entered same fees.', 400, ['code'=>'SAME_FEE']);
             }
 
 
@@ -93,15 +93,13 @@ class DeliveryFeeSettingController extends Controller
 
             // Check if price exists
             if (!$prices) {
-                return apiError('Delivery fees settings not found', 404);
+                return apiError('Delivery fees settings not found', 404, ['code'=>'DELIVERY_FEES_SETTINGS_NOT_FOUND']);
             }
 
             // Check if same package price entered
             if($prices->base_fare == $request->input('base_fare')){
-                $error = [
-                    'base_fare' => 'same'
-                ];
-                return apiError('You entered same fees.', 400, $error);
+
+                return apiError('You entered same fees.', 400, ['code'=>'SAME_FEE']);
             }
 
 

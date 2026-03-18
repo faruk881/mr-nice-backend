@@ -86,7 +86,7 @@ class CourierDeliveryController extends Controller
 
         // Check if order exists
         if (!$delivery) {
-            return apiError('Delivery not found.', 404);
+            return apiError('Delivery not found.', 404, ['code'=>'DELIVERY_NOT_FOUND']);
         }
 
         // return
@@ -118,7 +118,7 @@ class CourierDeliveryController extends Controller
 
         // check of order exists
         if (!$delivery) {
-            return apiError('Delivery not found or cannot be picked up.', 404);
+            return apiError('Delivery not found or cannot be picked up.', 404, ['code'=>'DELIVERY_NOT_FOUND']]);
         }
 
         // update order status
@@ -149,7 +149,7 @@ class CourierDeliveryController extends Controller
 
         // If order not found or not in correct status, return error
         if (!$delivery) {
-            return apiError('Delivery not found or cannot be delivered.', 404);
+            return apiError('Delivery not found or cannot be delivered.', 404, ['code'=>'DELIVERY_NOT_FOUND']);
         }
 
         // Start transaction to ensure data integrity

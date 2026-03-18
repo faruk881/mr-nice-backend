@@ -24,12 +24,12 @@ class PaymentController extends Controller
         
         // Check if order is belongs to that user.
         if($order->customer_id !== auth()->id()) {
-            return apiError('You are not authorized to update this order', 403);
+            return apiError('You are not authorized to update this order', 403, ['code'=>'FORBIDDEN']);
         }
 
         // Prevent payment if already paid
         if ($order->is_paid) {
-            return apiError('Order already paid.', 400);
+            return apiError('Order already paid.', 400, ['code'=>'ORDER_ALREADY_PAID']);
         }
 
         // Set Stripe secret key
@@ -183,7 +183,7 @@ class PaymentController extends Controller
             });
         }
 
-        return apiError('Invalid payment mode.', 400);
+        return apiError('Invalid payment mode.', 400, ['code'=>'INVALID_PAYMENT_MODE']);
     }
 
     private function savePaymentRecord($payment, $order, $stripeCustomerId, array $data)

@@ -29,7 +29,7 @@ class CustomerCourierController extends Controller
 
             // Check if profile exists and return custom message.
             if ($profile && isset($messages[$profile->document_status])) {
-                return apiError($messages[$profile->document_status], 422);
+                return apiError($messages[$profile->document_status], 422, ['code'=>'PROFILE_EXISTS']);
             }
 
             // Handle ID document upload

@@ -28,7 +28,7 @@ class ForgotPasswordController extends Controller
 
             // Check if user is created using google id.
             if($user->google_id){
-                return apiError('Password reset is not available for Google-authenticated accounts.',422);
+                return apiError('Password reset is not available for Google-authenticated accounts.', 422, ['code'=>'GOOGLE_ACCOUNT']);
             }
 
             // Check if user email is verified.
@@ -44,9 +44,9 @@ class ForgotPasswordController extends Controller
             }
 
             // OTP already valid → block resend
-            return apiError('A verification code was already sent. Please try again after it expires.',429);
+            return apiError('A verification code was already sent. Please try again after it expires.',429,['code'=>'OTP_ALREADY_SENT']);
         } catch (\Throwable $e) {
-            return apiError($e->getMessage());
+            throw $e;
         }
     }
 
@@ -58,7 +58,7 @@ class ForgotPasswordController extends Controller
 
             // Check if user exists and otp valid.
             if (! $user || ! $user->otp || ! Hash::check($request->otp, $user->otp) || now()->gt($user->otp_expires_at)) {
-                return apiError('Invalid or expired OTP', 422);
+                return apiError('Invalid or expired OTP', 422, ['code'=>'INVALID_OTP']);
             }
 
             // Generate password reset table
@@ -90,7 +90,7 @@ class ForgotPasswordController extends Controller
             // Return the data with success message
             return apiSuccess('OTP Verified Successfully',$data);
         } catch(\Throwable $e) {
-            return apiError($e->getMessage());
+            throw $e;
         }
     }
 
@@ -104,7 +104,7 @@ class ForgotPasswordController extends Controller
 
             // Check if user exists
             if (! $user) {
-                return apiError('Invalid or expired reset token', 422);
+                return apiError('Invalid or expired reset token', 422, ['code'=>'INVALID_RESET_TOKEN']);
             }
 
             // Update the user's password
@@ -121,7 +121,7 @@ class ForgotPasswordController extends Controller
             // return the message
             return apiSuccess('Password reset successful');
         } catch (\Throwable $e) {
-            return apiError($e->getMessage());
+            throw $e;
         }
     }
 }

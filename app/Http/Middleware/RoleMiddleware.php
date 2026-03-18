@@ -25,6 +25,6 @@ class RoleMiddleware
         }
 
         // Return the message
-        return apiError('Unauthorized. '.ucfirst($role).'s only.', 403);
+        return apiError('Unauthorized. '.ucfirst($role).'s only.', 403, ['code'=>'UNAUTHORIZED']);
     }
 }

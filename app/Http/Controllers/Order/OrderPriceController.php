@@ -39,7 +39,7 @@ class OrderPriceController extends Controller
         );
 
         if (!$measurement['success']) {
-            return apiError('Failed to calculate distance: ' . ($measurement['message'] ?? ''), 500);
+            return apiError('Failed to calculate distance: ' . ($measurement['message'] ?? ''), 500, ['code'=>'DISTANCE_CALCULATION_FAILED']);
         }
 
         // IMPORTANT: Use camelCase keys to match the DistanceService output
@@ -50,7 +50,7 @@ class OrderPriceController extends Controller
         $settings = DeliveryFeeSetting::first();
 
         if (!$settings) {
-            return apiError('Delivery pricing settings not configured in database', 404);
+            return apiError('Delivery pricing settings not configured in database', 404, ['code'=>'DELIVERY_PRICING_SETTINGS_NOT_FOUND']);
         }
 
         // 4. Extract Rates

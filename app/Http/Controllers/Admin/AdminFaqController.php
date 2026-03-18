@@ -57,7 +57,7 @@ class AdminFaqController extends Controller
 
         $faq = Faq::find($id);
         if (!$faq) {
-            return apiError("FAQ not found", 404);
+            return apiError("FAQ not found", 404,['code'=>'FAQ_NOT_FOUND']);
         }
         $faq->question = $request->question;
         $faq->answer = $request->answer;
@@ -74,7 +74,7 @@ class AdminFaqController extends Controller
     {
         $faq = Faq::find($id);
         if (!$faq) {
-            return apiError("FAQ not found", 404);
+            return apiError("FAQ not found", 404,['code'=>'FAQ_NOT_FOUND']);
         }
         $faq->delete();
 

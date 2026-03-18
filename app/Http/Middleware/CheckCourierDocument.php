@@ -20,7 +20,12 @@ class CheckCourierDocument
 
         if (!$document || $document->document_status !== $status) {
 
-            return apiError('Unauthorized. Documents not ' . $status,403, ['document_status' => $document->document_status]);
+            $errorCodes = [
+                'code' => 'UNAUTHORIZED',
+                'document_status' => $document->document_status
+            ];
+
+            return apiError('Unauthorized. Documents not ' . $status,403, $errorCodes);
         }
         return $next($request);
     }

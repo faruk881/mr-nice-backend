@@ -18,7 +18,7 @@ class StatusMiddleware
         $user = $request->user();
 
         if ($user && $user->status !== 'active') {
-            return apiError("Your account is {$user->status}.", 403);
+            return apiError("Your account is {$user->status}.", 403, ['code'=>'ACCOUNT_NOT_ACTIVE']);
         }
         return $next($request);
     }

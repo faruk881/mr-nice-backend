@@ -74,7 +74,7 @@ class DeliveryApprovalController extends Controller
 
         // Check if order exists
         if(!$order) {
-            return apiError('Order not found or cannot be modified', 404);
+            return apiError('Order not found or cannot be modified', 404,['code'=>'ORDER_NOT_FOUND']);
         }
         
         // Approve the courier

@@ -38,19 +38,19 @@ class AdminCourierPayoutsController extends Controller
         
         // Check if payout exists
         if(!$payout) {
-            return apiError('Payout not found',400);
+            return apiError('Payout not found',400,['code'=>'PAYOUT_NOT_FOUND']);
         }
         // Get the user
         $courier = $payout->courier;
 
         // check if courier exists
         if(!$courier) {
-            return apiError('Courier not found',400);
+            return apiError('Courier not found',400,['code'=>'COURIER_NOT_FOUND']);
         }
 
         // check if for duplicate rejected payouts
         if($payout->status === 'rejected' && $request->status === 'reject') {
-            return apiError('The payout already '.$payout->status);
+            return apiError('The payout already '.$payout->status,409,['code'=>'PAYOUT_ALREADY_REJECTED']);
         }
 
         // check for duplicate approved payout
@@ -60,12 +60,12 @@ class AdminCourierPayoutsController extends Controller
             || $payout->status === 'paid' 
             // || $payout->status === 'funded' 
             && $request->status === 'approve') {
-            return apiError('The payout already '.$payout->status);
+            return apiError('The payout already '.$payout->status,409,['code'=>'PAYOUT_ALREADY_APPROVED']);
         }
 
         // Prevent double handling
         if ($payout->status !== 'requested') {
-            return apiError('This payout can no longer be modified', 409);
+            return apiError('This payout can no longer be modified', 409,['code'=>'PAYOUT_ALREADY_PROCESSED']);
         }
 
         if ($request->status === 'reject') {
@@ -118,14 +118,14 @@ class AdminCourierPayoutsController extends Controller
 
             } catch (\Throwable $e) {
                 DB::rollBack();
-                return apiError('Failed to reject payout. '.$e->getMessage(), 500);
+                throw $e;
             }
         }
 
         if($request->status === 'pay') {
             try{
                 if (!$payout->wallet->user->stripe_user_id) {
-                    return apiError('Courier has no Stripe account connected', 422);
+                    return apiError('Courier has no Stripe account connected', 422,['code'=>'COURIER_NO_STRIPE_ACCOUNT']);
                 }
 
                 Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
@@ -134,7 +134,7 @@ class AdminCourierPayoutsController extends Controller
                 $account = Account::retrieve($courier->stripe_user_id);
     
                 if (!$account->charges_enabled && !$account->payouts_enabled) {
-                    return apiError('Courier Stripe account is not onboarded', 422);
+                    return apiError('Courier Stripe account is not onboarded', 422,['code'=>'COURIER_STRIPE_ACCOUNT_NOT_ONBOARDED']););
                 }
 
                 $payout->update([

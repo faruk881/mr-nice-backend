@@ -54,7 +54,7 @@ public function index()
                 $data['onboard_url'] = $accountLink->url;
             }
         } catch (\Exception $e) {
-            return apiError('Stripe account check failed: ' . $e->getMessage());
+            return apiError('Stripe account check failed: ' . $e->getMessage(), 500, ['code'=>'STRIPE_ACCOUNT_CHECK_FAILED']);
         }
 
         return apiSuccess('Payment method loaded', $data);

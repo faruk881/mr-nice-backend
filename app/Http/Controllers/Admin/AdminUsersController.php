@@ -93,16 +93,16 @@ class AdminUsersController extends Controller
 
         // Check if courier exists
         if (!$courier) {
-            return apiError('Courier not found.', 404);
+            return apiError('Courier not found.', 404,['code'=>'COURIER_NOT_FOUND']);
         }
 
         // Check if the courier document is already verified or rejected
         if($courier->courierProfile->document_status == $request->status) {
-            return apiError('This courier is document is already '.$request->status.'.', 422);
+            return apiError('This courier is document is already '.$request->status.'.', 422,['code'=>'SAME_DOCUMENT_STATUS']);
         }
 
         if($courier->courierProfile->document_status != 'pending') {
-            return apiError('This courier is document is not pending.', 422);
+            return apiError('This courier is document is not pending.', 422,['code'=>'NOT_PENDING_DOCUMENT_STATUS']);
         }
 
         // Update the courier profile document status
@@ -131,20 +131,12 @@ class AdminUsersController extends Controller
 
         // User not found
         if (!$user) {
-            return apiError(
-                'User not found.',
-                404,
-                ['code' => 'USER_NOT_FOUND']
-            );
+            return apiError('User not found.',404,['code' => 'USER_NOT_FOUND']);
         }
 
         // Same status check
         if ($user->status === $status) {
-            return apiError(
-                "This user is already {$status}.",
-                422,
-                ['code' => 'SAME_USER_STATUS']
-            );
+            return apiError("This user is already {$status}.",422,['code' => 'SAME_USER_STATUS']);
         }
 
         // Update status

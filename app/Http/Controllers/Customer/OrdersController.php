@@ -78,7 +78,7 @@ class OrdersController extends Controller
         );
 
         if(!$measure['success']) {
-            return apiError($measure['message'], 400);
+            return apiError($measure['message'], 400, ['code'=>'DISTANCE_MEASURE_FAILED']);
         }
 
         $distance = $measure['distance_km'];
@@ -161,7 +161,7 @@ class OrdersController extends Controller
 
         // Check if order exists
         if (!$order) {
-            return apiError('Order not found', 404);
+            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
         }
         return apiSuccess('Order loaded',$order);
 
@@ -177,11 +177,11 @@ class OrdersController extends Controller
 
         // Check if order exists
         if(!$order) {
-            return apiError('Order not found', 404);
+            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
         }
 
         if($order->customer_id !== auth()->id()) {
-            return apiError('You are not authorized to update this order', 403);
+            return apiError('You are not authorized to update this order', 403, ['code'=>'NOT_AUTHORIZED']);
         }
 
         // Cancel if order status is only pending_payment and pending
@@ -213,7 +213,7 @@ class OrdersController extends Controller
         }
 
         // Otherwise cannot cancel the order
-        return apiError('Cannot cancel this order', 403);
+        return apiError('Cannot cancel this order', 403, ['code'=>'NOT_ALLOWED']);
         
     }
 

@@ -19,7 +19,7 @@ class PlatformCommissionSettingController extends Controller
 
         // Check if exists
         if (!$platformCommissionSetting) {
-            return apiError('Platform Commission Settings not found', 404);
+            return apiError('Platform Commission Settings not found', 404, ['code'=>'PLATFORM_COMMISSION_SETTINGS_NOT_FOUND']);
         }
 
         // Return the platform commission

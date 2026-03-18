@@ -17,7 +17,7 @@ class CustomerNotificationsController extends Controller
 
         // Check if user exists
         if(!$user) {
-            return apiError('Notification not found',404);
+            return apiError('Notification not found', 404, ['code'=>'NOTIFICATION_NOT_FOUND']);
         }
 
         // Get notification

@@ -19,7 +19,7 @@ class AdminOrderRefundController extends Controller
 
         // Check if order exists
         if(!$order) {
-            return apiError('Order not found', 404);
+            return apiError('Order not found', 404,['code'=>'ORDER_NOT_FOUND']);
         }
 
         // Get the refund
@@ -27,7 +27,7 @@ class AdminOrderRefundController extends Controller
 
         // Check if refund exists
         if(!$refund) {
-            return apiError('Refund not found', 404);
+            return apiError('Refund not found', 404,['code'=>'REFUND_NOT_FOUND']);
         }
 
         if ($order->is_paid && $order->status == 'cancelled') {
@@ -37,7 +37,7 @@ class AdminOrderRefundController extends Controller
 
             // Check if there is valid payment
             if (!$payment || !$payment->stripe_payment_intent_id) {
-                return apiError('No valid payment found to refund.', 400);
+                return apiError('No valid payment found to refund.', 400,['code'=>'NO_VALID_PAYMENT_FOUND']);
             }
 
             $refundAmount = $payment->net_amount;
@@ -83,7 +83,7 @@ class AdminOrderRefundController extends Controller
             }
         }
 
-        return apiError('Cannot refund this order', 403);
+        return apiError('Cannot refund this order', 403,['code'=>'REFUND_NOT_ALLOWED']);
 
     }
 

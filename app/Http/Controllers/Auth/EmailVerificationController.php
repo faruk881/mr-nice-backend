@@ -22,17 +22,17 @@ class EmailVerificationController extends Controller
 
             // Check if user exists.
             if(!$user) {
-                return apiError('Invalid email or otp');
+                return apiError('Invalid email or otp',404,['code'=>'INVALID_EMAIL']);
             }
 
             // Check if user created using google id.
             if($user->google_id){
-                return apiError('User created using google. Please sign in using google.',403);
+                return apiError('User created using google. Please sign in using google.', 403, ['code'=>'USER_CREATED_USING_GOOGLE']);
             }
 
             // Check if usermail already verified.
             if($user->email_verified_at){
-                return apiError('The mail is already verified');
+                return apiError('The mail is already verified',409,['code'=>'EMAIL_ALREADY_VERIFIED']);
             }
 
             // Check if the OTP Expires.
@@ -41,7 +41,7 @@ class EmailVerificationController extends Controller
                 !$user->otp || 
                 !Hash::check($request->otp, $user->otp) || 
                 Carbon::now()->gt($user->otp_expires_at)) {
-                return apiError('Invalid or expired OTP, Please request a new one.');
+                return apiError('Invalid or expired OTP, Please request a new one.', 410, ['code'=>'INVALID_OTP']);
             }   
 
             // Update the otp status.
@@ -54,7 +54,7 @@ class EmailVerificationController extends Controller
             // Return success message.
             return apiSuccess('email successfully verified, now you can log in', new AuthUserResource($user));
         } catch(\Throwable $e) {
-                return apiError(app()->isLocal() ? $e->getMessage() : 'Something went wrong', 500);
+                throw $e;
         }
     }
 
@@ -65,17 +65,17 @@ class EmailVerificationController extends Controller
 
         // Generic error (prevents enumeration)
         if (! $user) {
-            return apiError('Invalid credentials.', 401);
+            return apiError('Invalid credentials.', 401,['code'=>'INVALID_CREDENTIALS']);
         }
 
         // Already verified
         if ($user->email_verified_at) {
-            return apiError('This email address has already been verified.',409);
+            return apiError('This email address has already been verified.',409,['code'=>'EMAIL_ALREADY_VERIFIED']);
         }
 
         // Account inactive
         if ($user->status !== 'active') {
-            return apiError('Your account is not active.', 403);
+            return apiError('Your account is not active.', 403, ['code'=>'ACCOUNT_NOT_ACTIVE']);
         }
 
         // OTP expired or not generated yet → resend
@@ -87,14 +87,14 @@ class EmailVerificationController extends Controller
             // Check if there is error sending otp
             if (!$otpResult['success']) {
 
-                return apiError('Unable to send verification code. Please try again later.',500);
+                return apiError('Unable to send verification code. Please try again later.', 500, ['code'=>'OTP_SEND_FAILED']);
             }
 
             return apiSuccess('A verification code has been sent to your email.',null,200);
         }
 
         // OTP still valid → block resend
-        return apiError('A verification code was already sent. Please try again after it expires.',429);
+        return apiError('A verification code was already sent. Please try again after it expires.', 429, ['code'=>'OTP_ALREADY_SENT']);
 
 
     }

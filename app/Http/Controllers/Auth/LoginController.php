@@ -18,7 +18,7 @@ class LoginController extends Controller
 
         // Generic error (prevents enumeration)
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return apiError('Invalid login credentials.', 401);
+            return apiError('Invalid login credentials.', 401, ['code'=>'INVALID_CREDENTIALS']);
         }
         
         // Check if email verified.
@@ -26,26 +26,23 @@ class LoginController extends Controller
 
             if ( ! $user->otp_expires_at || Carbon::now()->gt($user->otp_expires_at)) {
                 $otpService->sendEmailOtp($user,'register');
-                return apiError('error with mail sending',403);
+                return apiError('error with mail sending', 403, ['code'=>'OTP_SEND_FAILED']);
             }
 
-            return apiError(
-                'Your email address is not verified. A verification code has been sent.',
-                403
-            );
+            return apiError('Your email address is not verified. A verification code has been sent.', 403, ['code'=>'EMAIL_NOT_VERIFIED']);
         }
 
 
 
         // Account status check
         if ($user->status !== 'active') {
-            return apiError('Your account is not active.', 403);
+            return apiError('Your account is not active.', 403, ['code'=>'ACCOUNT_NOT_ACTIVE']);
         }
 
         // Check the role name
         $roleName = $request->type;
         if (!$user->roles()->where('name', $roleName)->exists()) {
-            return apiError('You do not have access to this role.', 403);
+            return apiError('You do not have access to this role.', 403, ['code'=>'ACCESS_DENIED']);
         }
 
         // Check for courier pending document status

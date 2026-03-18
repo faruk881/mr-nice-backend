@@ -33,12 +33,12 @@ class CourierRatingController extends Controller
 
         // Check if order exists
         if(!$order) {
-            return apiError('Order not found', 404);
+            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
         }
         
         // Check if user is rating with his own order
         if($order->customer_id !== auth()->id()) {
-            return apiError('You are not authorized to update this order', 403);
+            return apiError('You are not authorized to update this order', 403, ['code'=>'NOT_AUTHORIZED']);
         }
 
         // Check if order delivered
@@ -50,7 +50,7 @@ class CourierRatingController extends Controller
                 'order_id' => $order->id
             ]);
         } else {
-            return apiError('Order not delivered',403);
+            return apiError('Order not delivered', 403, ['code'=>'ORDER_NOT_DELIVERED']);
         }
 
         return apiSuccess('Rating submitted successfully.', $rating);

@@ -35,7 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $status = 500;
             $message = 'Backend server error.';
-            $code = "BACKEND_SERVER_ERROR";
+            $code = [
+                'code' => "BACKEND_SERVER_ERROR"
+            ];
             $errors = [];
 
             // Validation error
@@ -72,8 +74,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'status'  => 'error',
                 'message' => $message,
-                'code'    => $code,
-                'errors'  => $errors,
+                'errors'  => array_merge($code,$errors),
             ], $status);
         // }
     });

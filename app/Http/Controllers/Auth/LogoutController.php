@@ -22,10 +22,7 @@ class LogoutController extends Controller
             }
             return apiSuccess($message);
         } catch (\Throwable $e) {
-            return apiError(
-                app()->isLocal() ? $e->getMessage() : 'Logout failed.',
-                500
-            );
+            throw $e;
         }
     } //End of logout function
 }

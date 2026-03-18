@@ -16,7 +16,7 @@ class CourierStripeController extends Controller
 
         // Check if user already connected stripe
         if($user->stripe_user_id) {
-            return apiError('Stripe account is already connected',409);
+            return apiError('Stripe account is already connected', 409, ['code'=>'STRIPE_ALREADY_CONNECTED']);
         }
         
         // Encode the user id

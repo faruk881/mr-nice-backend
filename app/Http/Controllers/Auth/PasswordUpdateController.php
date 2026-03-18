@@ -15,7 +15,7 @@ class PasswordUpdateController extends Controller
 
             // Check current password
             if(!Hash::check($request->current_password, $user->password)){
-                return apiError('Current password is incorrect',422);
+                return apiError('Current password is incorrect', 422, ['code'=>'CURRENT_PASSWORD_INCORRECT']);
             }
 
             // Update to new password
@@ -27,7 +27,7 @@ class PasswordUpdateController extends Controller
 
             return apiSuccess('Password changed successfully');
         } catch(\Throwable $e){
-            return apiError($e->getMessage());
+            throw $e;
         }
     }
 }

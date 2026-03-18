@@ -46,28 +46,19 @@ class CourierPayoutsController extends Controller
 
             // Check if stripe account is connected
             if(!$courier->stripe_user_id) {
-                $error = [
-                    'stripe-account-status' => 'not-connected',
-                ];
-                return apiError('Stripe account is not connected',409,$error);
+                return apiError('Stripe account is not connected',409,['code'=>'STRIPE_ACCOUNT_NOT_CONNECTED']);
             }
 
             // Check minimum payout amount
             if( $payoutAmount < $minAmount ) {
                 
-                $error = [
-                    'min_amount' => 'false'
-                ];
-                return apiError('Minimum payout amount is '.$minAmount.' USD', 422,$error);
+                return apiError('Minimum payout amount is '.$minAmount.' USD', 422,['code'=>'MIN_AMOUNT']);
             }
 
             // Check maximum payout amount
             if( $payoutAmount > $maxAmount ) {
                 
-                $error = [
-                    'max_amount' => 'false'
-                ];
-                return apiError('The maximum payout amount is '.$maxAmount.' USD', 422,$error);
+                return apiError('The maximum payout amount is '.$maxAmount.' USD', 422, ['code'=>'MAX_AMOUNT']);
             }
 
 
@@ -121,7 +112,7 @@ class CourierPayoutsController extends Controller
         } catch(\Throwable $e) {
             // Rollback of error
             DB::rollback();
-            return apiError('Failed to create payout request '.$e->getMessage(), 500);
+            return apiError('Failed to create payout request '.$e->getMessage(), 500, ['code'=>'FAILED_TO_CREATE_PAYOUT_REQUEST']);
 
         }
 

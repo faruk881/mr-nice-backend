@@ -39,7 +39,7 @@ class RegisterController extends Controller
             // Check if role exists
             if (!$userRole) {
                 DB::rollBack();
-                return apiError('Invalid user type', 404);
+                return apiError('Invalid user type', 404, ['code' => 'INVALID_USER_TYPE']);
             }
 
             // Assign user role
@@ -71,7 +71,7 @@ class RegisterController extends Controller
             if (!$otpResult['success']) {
                 DB::rollBack();
 
-                return apiError('Unable to send verification code. Please try again later.',500);
+                return apiError('Unable to send verification code. Please try again later.', 500, ['code'=>'OTP_SEND_FAILED']);
             }
 
             // Commit the database
