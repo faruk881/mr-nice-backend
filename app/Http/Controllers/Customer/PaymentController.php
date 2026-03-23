@@ -16,10 +16,22 @@ use Stripe\PaymentIntent;
 
 class PaymentController extends Controller
 {
-    public function store(PaymentRequest $request, $orderId)
+    public function store(PaymentRequest $request, $orderNumber)
     {
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
         // Fetch the order with the related user
-        $order = Order::with('customer')->findOrFail($orderId);
+        $order = Order::with('customer')->where('order_number',$orderNumber)->first();
+
+        // Check if order exists
+        if(!$order) {
+            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
+        }
+
         $user = $order->customer;
         
         // Check if order is belongs to that user.

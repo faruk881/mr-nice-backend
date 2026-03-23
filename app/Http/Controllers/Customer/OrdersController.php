@@ -144,11 +144,11 @@ class OrdersController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $order_number)
+    public function show(string $orderNumber)
     {
-        // Validate prefix
-        if (!str_starts_with(strtolower($order_number), 'lx')) {
-            return apiError('Invalid order number format', 422, [
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
                 'code' => 'INVALID_ORDER_NUMBER'
             ]);
         }
@@ -164,7 +164,7 @@ class OrdersController extends Controller
                 'payments', 
                 'refund'
             ])
-            ->where('order_number',$order_number)->first();
+            ->where('order_number',$orderNumber)->first();
 
         // Check if order exists
         if (!$order) {
@@ -177,16 +177,16 @@ class OrdersController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(OrderCancelRequest $request, string $order_number)
+    public function update(OrderCancelRequest $request, string $orderNumber)
     {
         // Validate prefix
-        if (!str_starts_with(strtolower($order_number), 'lx')) {
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
             return apiError('Invalid order number format. The order number starts with LX.', 422, [
                 'code' => 'INVALID_ORDER_NUMBER'
             ]);
         }
         // Get the order
-        $order = Order::where('order_number',$order_number)->first();
+        $order = Order::where('order_number',$orderNumber)->first();
 
         // Check if order exists
         if(!$order) {
