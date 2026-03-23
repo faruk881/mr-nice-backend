@@ -158,7 +158,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
 
     // Delivery
     Route::get('/deliveries', [DeliveryApprovalController::class, 'index'])->name('admin.deliveries.index');
-    Route::patch('/deliveries/{id}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
+    Route::patch('/deliveries/{orderNumber}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
 
     // Platform commission settings
     Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');

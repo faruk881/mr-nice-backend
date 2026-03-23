@@ -12,10 +12,17 @@ use Stripe\Stripe;
 
 class AdminOrderRefundController extends Controller
 {
-    public function update($order_id){
+    public function update($orderNumber){
+
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
         
         // Get the order
-        $order = Order::with('refund')->find($order_id);
+        $order = Order::with('refund')->where('order_number',$orderNumber)->first();
 
         // Check if order exists
         if(!$order) {

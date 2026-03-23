@@ -64,13 +64,21 @@ class DeliveryApprovalController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(DeliveryApprovalRequest $request, string $id)
+    public function update(DeliveryApprovalRequest $request, string $orderNumber)
     {
+
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
+
         // Get the status
         $status = $request->status;
 
         // Get the order
-        $order = Order::where('id', $id)->where('status', 'pending_delivery')->first();
+        $order = Order::where('order_number', $orderNumber)->where('status', 'pending_delivery')->first();
 
         // Check if order exists
         if(!$order) {

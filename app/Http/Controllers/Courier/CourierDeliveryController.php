@@ -16,7 +16,7 @@ class CourierDeliveryController extends Controller
      */
     
     public function index(Request $request)
-        {
+    {
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
             'filter' => 'sometimes|nullable|in:active,completed,cancelled,delivered,pending_delivery,all',
@@ -66,14 +66,6 @@ class CourierDeliveryController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(string $id)
@@ -93,32 +85,24 @@ class CourierDeliveryController extends Controller
         return apiSuccess('Delivery details retrieved successfully.', $delivery);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function pickup($orderNumber)
     {
-        //
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    public function pickup($id) {
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
 
         // Get the order
-        $delivery = Order::where('id', $id)
+        $delivery = Order::where('order_number', $orderNumber)
             ->where('status', 'accepted')
             ->first();
 
         // check of order exists
         if (!$delivery) {
-            return apiError('Delivery not found or cannot be picked up.', 404, ['code'=>'DELIVERY_NOT_FOUND']]);
+            return apiError('Delivery not found or cannot be picked up.', 404, ['code'=>'DELIVERY_NOT_FOUND']);
         }
 
         // update order status
@@ -135,14 +119,21 @@ class CourierDeliveryController extends Controller
         return apiSuccess('Delivery marked as picked up.', $delivery);
     }
 
-    public function deliver(Request $request, $id) {
+    public function deliver(Request $request, $orderNumber)
+    {
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
         // Validate input
         $request->validate([
             'delivery_proof' => 'required|image|max:10240', // 10MB
         ]);
 
         // Find order first (before storing image)
-        $delivery = Order::where('id', $id)
+        $delivery = Order::where('order_number', $orderNumber)
             ->where('courier_id', auth()->id())
             ->where('status', 'pickedup')
             ->first();

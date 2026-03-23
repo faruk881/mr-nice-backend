@@ -11,42 +11,51 @@ class CourierOrderController extends Controller
 {
     public function index(Request $request)
     {
-        // per page and status filters
+        // per page and filters
         $perPage = $request->query('per_page', 10);
         $size = $request->query('size', 'all');
+        $search = $request->query('search'); // 🔍 search input
 
-
-        // Get pending orders that are not yet accepted by any courier
+        // Base query
         $query = Order::where('status', 'pending')
             ->whereNull('courier_id');
 
-        // filter by package size if provided
+        // filter by package size
         switch ($size) {
             case 'small':
-                $query->where('package_size', 'small');
-                break;
             case 'medium':
-                $query->where('package_size', 'medium');
-                break;
             case 'large':
-                $query->where('package_size', 'large');
+                $query->where('package_size', $size);
                 break;
             case 'all':
             default:
-                // no filtering
                 break;
         }
 
-        // paginate and return
-        $orders = $query->paginate($perPage);
+        // Search functionality
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%");
+                // add more fields if needed
+            });
+        }
 
-        // Return response
+        // paginate
+        $orders = $query->latest()->paginate($perPage);
+
         return apiSuccess('Pending orders retrieved successfully', $orders);
     }
 
-    public function show($orderId) {
+    public function show($orderNumber) {
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
+
         // Show order details
-        $order = Order::where('id', $orderId)->where('status', 'pending')->with('customer:id,name,phone,profile_photo')->first();
+        $order = Order::where('order_number', $orderNumber)->where('status', 'pending')->with('customer:id,name,phone,profile_photo')->first();
 
         // Check if order exists and is pending
         if (!$order) {
@@ -57,9 +66,17 @@ class CourierOrderController extends Controller
         return apiSuccess('Order details retrieved successfully.', $order);
     }
 
-    public function accept($orderId) {
+    public function accept($orderNumber) {
+
+        // Validate order number
+        if (!str_starts_with(strtolower($orderNumber), 'lx')) {
+            return apiError('Invalid order number format. The order number starts with LX.', 422, [
+                'code' => 'INVALID_ORDER_NUMBER'
+            ]);
+        }
+
         // Get the order
-        $order = Order::where('id', $orderId)->where('status', 'pending')->first();
+        $order = Order::where('order_number', $orderNumber)->where('status', 'pending')->first();
 
         // Check if order exists and is pending
         if (!$order) {
