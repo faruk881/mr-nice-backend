@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\RefundPolicySetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -47,7 +48,32 @@ class AdminOrderRefundController extends Controller
                 return apiError('No valid payment found to refund.', 400,['code'=>'NO_VALID_PAYMENT_FOUND']);
             }
 
-            $refundAmount = $payment->net_amount;
+            // Get the refund policy setting
+            $refundPolicySetting = RefundPolicySetting::first();
+
+            // Check if refund policy setting exists
+            if(!$refundPolicySetting) {
+                return apiError('Refund policy setting not found', 404,['code'=>'REFUND_POLICY_SETTING_NOT_FOUND']);
+            }
+
+            // Determine refund amount
+            if ($refundPolicySetting->refund_type === "partial_refund") {
+                $refundAmount = $payment->net_amount;
+            } elseif ($refundPolicySetting->refund_type === "full_refund") {
+                $refundAmount = $payment->amount;
+            } elseif ($refundPolicySetting->refund_type === "custom_refund") {
+                if ($payment->amount < $refundPolicySetting->custom_refund_deduction_amount) {
+                    return apiError(
+                        'Payment amount is less than the custom refund deduction amount.', 
+                        400, 
+                        ['code'=>'PAYMENT_AMOUNT_LESS_THAN_CUSTOM_REFUND_DEDUCTION']
+                    );
+                }
+                $refundAmount = $payment->amount - $refundPolicySetting->custom_refund_deduction_amount;
+            } else {
+                return apiError('Invalid refund type', 400, ['code' => 'INVALID_REFUND_TYPE']);
+            }
+            
 
             // Refund the payment
             Stripe::setApiKey(config('services.stripe.secret'));

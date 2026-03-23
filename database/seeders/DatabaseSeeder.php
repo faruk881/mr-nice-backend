@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->call(DeliveryFeeSettingsSeeder::class);
         $this->call(PlatformCommissionSettingSeeder::class);
         $this->call(PayoutThrseholdSeeder::class);
+        $this->call(RefundPolicySettingSeeder::class);
         
     }
 }

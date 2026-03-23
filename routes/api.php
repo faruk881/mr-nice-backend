@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\DeliveryFeeSettingController;
 use App\Http\Controllers\Admin\PlatformCommissionSettingController;
 use App\Http\Controllers\Admin\DeliveryApprovalController;
 use App\Http\Controllers\Admin\PayoutThrseholdsController;
+use App\Http\Controllers\Admin\RefundPolicySettingsController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -163,6 +164,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     // Platform commission settings
     Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');
     Route::patch('/platform-commission-settings',[PlatformCommissionSettingController::class,'update'])->name('admin.platform-commission-settings.update');
+
+    // Refund Policy 
+    Route::get('/refund_policy_settings',[RefundPolicySettingsController::class,'index'])->name('admin.refund-policy-settings.index');
+    Route::patch('/refund_policy_settings',[RefundPolicySettingsController::class,'update'])->name('admin.refund-policy-settings.update');
 
     // Courier Payouts
     Route::get('/courier-payouts', [AdminCourierPayoutsController::class, 'index'])->name('courier.earnings.index');
