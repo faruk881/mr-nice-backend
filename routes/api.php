@@ -36,6 +36,7 @@ use App\Http\Controllers\Customer\CustomerPaymentMethodsController;
 use App\Http\Controllers\Customer\OrdersController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Order\OrderPriceController;
+use App\Http\Controllers\Profile\NotificationsController;
 use App\Http\Controllers\Profile\UserProfileController;
 use App\Http\Controllers\Stripe\StripeConnectWebhookController;
 use App\Http\Controllers\Stripe\StripeWebhookController;
@@ -45,6 +46,10 @@ use Symfony\Component\HttpFoundation\Request;
 // Stripe Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 // Route::post('/stripe-connect/webhook',[StripeConnectWebhookController::class,'handleWebhook']);
+
+// Notificaitons
+Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications.index')->middleware('auth:sanctum');
+Route::patch('/notifications/{id}', [NotificationsController::class, 'update'])->name('notifications.update')->middleware('auth:sanctum');
 
 // Auth Routes
 Route::prefix('auth')->group(function () {
@@ -101,7 +106,6 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     Route::get('/faqs', [AdminFaqController::class, 'index'])->name('customer.faqs.index');
     Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.terms.show');
     Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
-    Route::get('/notifications', [CustomerNotificationsController::class, 'index'])->name('customer.notifications.index');
 
     
 });
@@ -137,7 +141,7 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
 
         // Stripe
         // Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
-        Route::get('/notifications', [CourierNotificationsController::class, 'index'])->name('courier.notifications.index');
+        
 
     });
 

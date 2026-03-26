@@ -25,10 +25,12 @@ class OrdersController extends Controller
     {
         $perPage = $request->query('per_page', 10);
         $status = $request->query('status', 'all');
-
+    
         $query = auth()->user()->orders()
             ->with('refund')
-            ->where('customer_id', auth()->id());
+            ->where('customer_id', auth()->id())
+            ->where('status', '!=', 'pending_payment'); // exclude pending_payment
+    
         switch ($status) {
             case 'active':
                 $query->where('status', 'pending');
@@ -41,12 +43,12 @@ class OrdersController extends Controller
                 break;
             case 'all':
             default:
-                // no filtering
+                // no additional filtering
                 break;
         }
-
+    
         $orders = $query->latest()->paginate($perPage);
-
+    
         return apiSuccess('Orders loaded', $orders);
     }
 
