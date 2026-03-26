@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\DeliveryEstimateRequest;
 use App\Http\Requests\Customer\DeliveryRequestRequest;
 use App\Models\DeliveryFeeSetting;
 use App\Services\DistanceService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Controller responsible for calculating real-time delivery pricing.
@@ -20,7 +22,7 @@ class OrderPriceController extends Controller
      * @param DistanceService $distanceService The service we documented previously
      * @return JsonResponse
      */
-    public function estimate(DeliveryRequestRequest $request, DistanceService $distance_service): JsonResponse
+    public function estimate(DeliveryEstimateRequest $request, DistanceService $distance_service): JsonResponse
     {
         // Calculate departure time
         $departure_time = isset($booking_date)

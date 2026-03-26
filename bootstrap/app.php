@@ -29,55 +29,55 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withExceptions(function (Exceptions $exceptions): void {
 
-    $exceptions->render(function (Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
 
-        // if ($request->expectsJson()) {
-
-            $status = 500;
-            $message = 'Backend server error.';
-            $code = [
-                'code' => "BACKEND_SERVER_ERROR"
-            ];
-            $errors = [];
-
-            // Validation error
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
-                $status = 422;
-                $message = 'Something went wrong.';
-                $code = 'VALIDATION_ERROR';
-                $errors = $e->errors();
-            }
-
-            // Model not found
-            elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
-                $status = 404;
-                $message = 'Resource not found.';
-                $code = 'RESOURCE_NOT_FOUND';
-
-            }
-
-            // Authentication
-            elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
-                $status = 401;
-                $message = 'Unauthenticated.';
-                $code = 'UNAUTHENTICATED';
-            }
-
-            // Debug mode
-            if (config('app.debug')) {
-                $message = $e->getMessage();
-                $errors = [
-                    'trace' => $e->getTraceAsString(),
+            // if ($request->expectsJson()) {
+    
+                $status = 500;
+                $message = 'Backend server error.';
+                $code = [
+                    'code' => "BACKEND_SERVER_ERROR"
                 ];
-            }
-
-            return response()->json([
-                'status'  => 'error',
-                'message' => $message,
-                'errors'  => array_merge($code,$errors),
-            ], $status);
-        // }
-    });
+                $errors = [];
+    
+                // Validation error
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $status = 422;
+                    $message = 'Something went wrong.';
+                    $code = ['code' => 'VALIDATION_ERROR'];
+                    $errors = $e->errors();
+                }
+    
+                // Model not found
+                elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                    $status = 404;
+                    $message = 'Resource not found.';
+                    $code = ['code' => 'RESOURCE_NOT_FOUND'];
+    
+                }
+    
+                // Authentication
+                elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    $status = 401;
+                    $message = 'Unauthenticated.';
+                    $code = ['code' => 'UNAUTHENTICATED'];
+                }
+    
+                // Debug mode
+                if (config('app.debug')) {
+                    $message = $e->getMessage();
+                    $errors = [
+                        'trace' => $e->getTraceAsString(),
+                    ];
+                }
+    
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => $message,
+                    'errors'  => array_merge($code,$errors),
+                ], $status);
+            // }
+        });
 
 })
 ->create();
