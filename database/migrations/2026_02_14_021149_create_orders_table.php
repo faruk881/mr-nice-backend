@@ -40,8 +40,8 @@ return new class extends Migration
             $table->decimal('per_km_fee', 10, 2);
             $table->decimal('package_fee', 10, 2);
             $table->decimal('total_fee', 10, 2);
-            $table->decimal('stripe_processing_fee', 10, 2);
-            $table->decimal('net_amount', 10, 2);
+            $table->decimal('stripe_processing_fee', 10, 2)->nullable();
+            $table->decimal('net_amount', 10, 2)->nullable();
             $table->boolean('is_paid')->default(false);
 
             // Status

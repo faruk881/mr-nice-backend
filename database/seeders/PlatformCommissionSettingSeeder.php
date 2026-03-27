@@ -15,8 +15,8 @@ class PlatformCommissionSettingSeeder extends Seeder
     {
         PlatformCommissionSetting::updateOrCreate([
             'commission_amount' => 0,
-            'commission_percent' => 0,
-            'active_commission' => 'commission_amount',
+            'commission_percent' => 10,
+            'active_commission' => 'commission_percent',
             'currency' => 'CHF'
         ]);
     

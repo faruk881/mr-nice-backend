@@ -11,8 +11,8 @@ class CourierProfile extends Model
     // The wallet will automatically be created when a courier profile is created
     protected static function booted()
     {
-        static::created(function (CourierProfile $courier) {
-            $user = $courier->user;
+        static::created(function ($courierProfile) {
+            $user = $courierProfile->user;
 
             if (!$user->wallet) {
                 $user->wallet()->create([
@@ -23,6 +23,7 @@ class CourierProfile extends Model
             }
         });
     }
+
     
     public function user() {
         return $this->belongsTo(User::class);

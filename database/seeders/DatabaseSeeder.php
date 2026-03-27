@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Order;
 use App\Models\PayoutThrsehold;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -16,7 +17,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        
 
         // User::factory()->create([
         //     'name' => 'Test User',
@@ -29,6 +30,16 @@ class DatabaseSeeder extends Seeder
         $this->call(PlatformCommissionSettingSeeder::class);
         $this->call(PayoutThrseholdSeeder::class);
         $this->call(RefundPolicySettingSeeder::class);
+        
+        // Create users
+        User::factory()->customer()->count(5)->create();
+        User::factory()->courier()->count(5)->create();
+        Order::factory()->count(9999)->create()->each(function($order) {
+            $order->order_number = 'LX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
+            $order->saveQuietly(); // avoid triggering events again
+        });
+
+        
         
     }
 }

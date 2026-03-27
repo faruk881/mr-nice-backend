@@ -96,7 +96,7 @@ class PaymentController extends Controller
                     ]],
                     'mode' => 'payment',
                     'metadata' => [
-                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
                         'customer_id' => $user->id,
                     ],
                     'success_url' => config('app.frontend_url'),
@@ -163,12 +163,12 @@ class PaymentController extends Controller
                         'customer'             => $stripeCustomer->id,
                         'payment_method_types' => ['card', 'twint'],
                         'metadata'             => [
-                            'order_id'    => $order->id,
+                            'order_number'    => $order->order_number,
                             'customer_id' => $user->id,
                         ],
                     ], [
                         // Prevents Stripe from creating a duplicate if the API is hit twice
-                        'idempotency_key' => 'pi_order_' . $order->id . '_v1',
+                        'idempotency_key' => 'pi_order_' . $order->order_number . '_v1',
                     ]);
                 }
 

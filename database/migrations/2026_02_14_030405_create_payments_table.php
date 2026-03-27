@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('payment_link')->nullable(); // optional: store actual link URL
 
             $table->decimal('amount', 10, 2);
-            $table->decimal('stripe_processing_fee', 10, 2);
-            $table->decimal('net_amount', 10, 2);
+            $table->decimal('stripe_processing_fee', 10, 2)->nullable();
+            $table->decimal('net_amount', 10, 2)->nullable();
             $table->string('currency')->default('chf'); // TWINT uses CHF
 
             $table->enum('status', ['pending','requires_action','processing','succeeded','failed','refunded'])->default('pending');

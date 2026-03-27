@@ -23,7 +23,7 @@ class AdminOrderRequest extends FormRequest
     {
         return [
             'per_page'   => 'integer|min:1|max:100',
-            'status'     => 'nullable|in:pending,accepted,pickedup,delivered,cancelled',
+            'status'     => 'nullable|in:pending,accepted,pickedup,delivered,cancelled,pending_delivery',
             'start_date' => 'nullable|date|before_or_equal:end_date',
             'end_date'   => 'nullable|date|after_or_equal:start_date',
             'search'     => 'nullable|string|max:255',
