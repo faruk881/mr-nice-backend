@@ -67,7 +67,7 @@ class AdminDashboardStatsController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
-        $totalThisMonth = $wallet->transactions()
+        $totalThisMonthEarning = $wallet->transactions()
             ->where('source', 'delivery_commission')
             ->where('type', 'credit')
             ->where('status', 'completed')
@@ -78,7 +78,7 @@ class AdminDashboardStatsController extends Controller
         $startLastSixMonths = Carbon::now()->subMonths(6)->startOfMonth();
         $endNow = Carbon::now()->endOfMonth();
 
-        $totalLastSixMonths = $wallet->transactions()
+        $totalLastSixMonthsEarning = $wallet->transactions()
             ->where('source', 'delivery_commission')
             ->where('type', 'credit')
             ->where('status', 'completed')
@@ -89,7 +89,7 @@ class AdminDashboardStatsController extends Controller
         $startOfYear = Carbon::now()->startOfYear();
         $endOfYear = Carbon::now()->endOfYear();
 
-        $totalThisYear = $wallet->transactions()
+        $totalThisYearEarning = $wallet->transactions()
             ->where('source', 'delivery_commission')
             ->where('type', 'credit')
             ->where('status', 'completed')
@@ -112,9 +112,9 @@ class AdminDashboardStatsController extends Controller
             'total_active_couriers' => $totalActiveCouriers,
             'total_weekly_earnings' => $totalWeeklyEarnings,
             'weekly_earnings' => $weeklyEarnings,
-            'total_this_month' => $totalThisMonth,
-            'total_last_six_months' => $totalLastSixMonths,
-            'total_last_year' => $totalThisYear,
+            'total_this_month_earning' => $totalThisMonthEarning,
+            'total_last_six_months_earning' => $totalLastSixMonthsEarning,
+            'total_last_year_earning' => $totalThisYearEarning,
             'recent_five_pending_orders' => $recentFivePnedingOrders,
             
         ];
