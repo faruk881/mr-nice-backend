@@ -68,10 +68,10 @@ class CourierDeliveryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $order_number)
     {
         // Get the order
-        $delivery = Order::where('id', $id)
+        $delivery = Order::where('order_number', $order_number)
             ->where('courier_id', auth()->id())
             ->with('customer:id,name,phone,profile_photo')
             ->first();
