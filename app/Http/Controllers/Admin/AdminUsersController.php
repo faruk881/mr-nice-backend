@@ -123,11 +123,12 @@ class AdminUsersController extends Controller
         $status = $request->input('status');
 
         // Get courier
-        $user = User::where('id', $id)
-            ->whereHas('roles', function ($q) {
-                $q->where('name', 'courier');
-            })
-            ->first();
+        // $user = User::where('id', $id)
+        //     ->whereHas('roles', function ($q) {
+        //         $q->where('name', 'courier');
+        //     })
+        //     ->first();
+        $user = User::where('id', $id)->first();
 
         // User not found
         if (!$user) {

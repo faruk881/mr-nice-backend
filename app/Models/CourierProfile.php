@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class CourierProfile extends Model
 {
@@ -27,5 +28,11 @@ class CourierProfile extends Model
     
     public function user() {
         return $this->belongsTo(User::class);
+    }
+
+    // Show full link
+    public function getIdDocumentAttribute($value)
+    {
+        return Storage::disk('public')->url($value);
     }
 }
