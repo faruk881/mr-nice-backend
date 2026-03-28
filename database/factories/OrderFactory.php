@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Models\WalletTransaction;
+use App\Notifications\OrderStatusNotification;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -26,15 +28,15 @@ class OrderFactory extends Factory
         $deliveryLon = $this->faker->longitude();
         // Booking date: from last 7 months to next 5 days (you can adjust future range)
         $bookingDate = Carbon::now()
-        ->subMonths(7)
-        ->addDays(rand(0, (26 * 30) + 28)) // total range: ~7 months + 5 days
-        ->startOfDay();
+            ->subMonths(7)
+            ->addDays(rand(0, (26 * 30) + 28)) // total range: ~7 months + 5 days
+            ->startOfDay();
 
         // Created date: must be before or equal to booking date
         $createdAt = (clone $bookingDate)
-        ->subDays(rand(0, 10)) // created up to 10 days before booking
-        ->subHours(rand(0, 23))
-        ->subMinutes(rand(0, 59));
+            ->subDays(rand(0, 10)) // created up to 10 days before booking
+            ->subHours(rand(0, 23))
+            ->subMinutes(rand(0, 59));
 
         $distance = $this->faker->randomFloat(2, 1, 50);
         $baseFare = 50;
@@ -53,7 +55,8 @@ class OrderFactory extends Factory
             'accepted',
             'pickedup',
             'pending_delivery',
-            'cancelled'
+            'cancelled',
+            'delivered'
         ]);
 
         return [
@@ -80,6 +83,7 @@ class OrderFactory extends Factory
             'is_paid'          => false, // default
             'created_at'       => $createdAt,
         ];
+        
     }
 
     public function configure()
@@ -151,7 +155,7 @@ class OrderFactory extends Factory
 
 
             // Automatically create payment if status is 'accepted', 'pickedup', 'delivered', 'pending_delivery'
-            if (in_array($order->status, ['accepted', 'pickedup', 'pending_delivery',])) {
+            if (in_array($order->status, ['accepted', 'pickedup', 'pending_delivery'])) {
                 $stripeFeePercent = 0.029;
                 $stripeFixedFee  = 0.30;
 
@@ -179,6 +183,104 @@ class OrderFactory extends Factory
                     'net_amount'                 => $netAmount,
                 ]);
             }
+
+            if (in_array($order->status, ['delivered'])) {
+                $stripeFeePercent = 0.029;
+                $stripeFixedFee  = 0.30;
+
+                $stripeProcessingFee = round($order->total_fee * $stripeFeePercent + $stripeFixedFee, 2);
+                $netAmount = round($order->total_fee - $stripeProcessingFee, 2);
+
+                $order->payments()->create([
+                    'stripe_payment_intent_id'   => 'factory',
+                    'stripe_charge_id'           => 'factory',
+                    'status'                     => 'succeeded',
+                    'payment_method'             => 'card',
+                    'amount'                     => $order->total_fee,
+                    'stripe_processing_fee'      => $stripeProcessingFee,
+                    'net_amount'                 => $netAmount,
+                    'currency'                   => 'chf',
+                    'created_at'                 => $order->created_at
+                ]);
+
+                $order->update([
+                    'courier_id' => User::whereHas('courierProfile', function($query) {
+                                        $query->where('document_status', 'verified');
+                                    })->inRandomOrder()->first()->id,
+                    'is_paid' => true,
+                    'stripe_processing_fee'      => $stripeProcessingFee,
+                    'net_amount'                 => $netAmount,
+                ]);
+
+                // Get the wallet from order
+                $courierWallet = $order->courier->wallet;
+
+                // Get commission before and after
+                $balanceBefore = $courierWallet->balance;
+                $balanceAfter  = $balanceBefore + $order->courier_commission;
+
+                // Update the courier wallet
+                $courierWallet->update([
+                    'balance' => $balanceAfter
+                ]);
+
+                // Update the wallet
+                WalletTransaction::create([
+                    'wallet_id'      => $courierWallet->id,
+                    'order_id'        => $order->id,
+                    'type'           => 'credit',
+                    'source'         => 'delivery_commission', //'delivery_commission','refund','adjustment','payout','payout_request','payout_failed','payout_canceled'
+                    'amount'         => $order->courier_commission,
+                    'balance_before' => $balanceBefore,
+                    'balance_after'  => $balanceAfter,
+                    'status'         => 'completed',
+                    'created_at'     => $order->created_at
+                ]);
+
+                // Get the wallet from order
+                $adminWallet = User::whereHas('roles', function($q) {
+                    $q->where('name', 'admin');
+                })->inRandomOrder()->first()->wallet;
+
+                // Get commission before and after
+                $balanceBefore = $adminWallet->balance;
+                $balanceAfter  = $balanceBefore + $order->admin_commission;
+
+                // Update the courier wallet
+                $adminWallet->update([
+                    'balance' => $balanceAfter
+                ]);
+
+                // Update the wallet
+                WalletTransaction::create([
+                    'wallet_id'      => $adminWallet->id,
+                    'order_id'        => $order->id,
+                    'type'           => 'credit',
+                    'source'         => 'delivery_commission',
+                    'amount'         => $order->admin_commission,
+                    'balance_before' => $balanceBefore,
+                    'balance_after'  => $balanceAfter,
+                    'status'         => 'completed',
+                    'created_at'     => $order->created_at
+                ]);
+
+                // Update the order
+                $order->update([
+                    'status' => 'delivered'
+                ]);
+
+                // Sent notification
+                $order->customer->notify( 
+                    new OrderStatusNotification($order, 'delivered') 
+                ); 
+                $order->courier->notify( 
+                    new OrderStatusNotification($order, 'delivery_approved') 
+                ); 
+            }
+            
+            $order->customer->notify( 
+                new OrderStatusNotification($order, $order->status) 
+            ); 
         });
     }
 }

@@ -161,9 +161,14 @@ class DeliveryApprovalController extends Controller
                     'status' => 'delivered'
                 ]);
 
-                // Sent notification
+                // Sent notification to customer
                 $order->customer->notify( 
                     new OrderStatusNotification($order, 'delivered') 
+                ); 
+
+                // Sent notification to courier
+                $order->courier->notify( 
+                    new OrderStatusNotification($order, 'delivery_approved') 
                 ); 
 
                 DB::commit();

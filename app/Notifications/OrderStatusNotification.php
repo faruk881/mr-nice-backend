@@ -64,7 +64,8 @@ class OrderStatusNotification extends Notification
             'accepted' => 'Order Accepted', 
             'pickedup' => 'Order Picked Up', 
             'delivered' => 'Order Delivered', 
-            'cancelled' => 'Order Cancelled', 
+            'cancelled' => 'Order Cancelled',
+            'delivery_approved' => 'Delivery Approved', 
             default => 'Order Update', 
         }; 
     } 
@@ -77,7 +78,9 @@ class OrderStatusNotification extends Notification
             'accepted' => "Your order #{$this->order->order_number} your has been accepted by courier", 
             'pickedup' => "Your order #{$this->order->order_number} has been picked up.", 
             'delivered' => "Your order #{$this->order->order_number} has been delivered successfully.", 
-            'cancelled' => "Your order #{$this->order->order_number} has been cancelled. You will get your refund shortly", 
+            'cancelled' => "Your order #{$this->order->order_number} has been cancelled. You will get your refund shortly",
+            'delivery_approved' => "Your delivery request #{$this->order->order_number} has been approved and your wallet balance updated.",
+             
             default => "There is an update for your order #{$this->order->order_number}.", 
         }; 
     }
