@@ -32,14 +32,18 @@ class AdminDashboardStatsController extends Controller
         $query = User::query();
 
         // 03. Get total active customers
-        $totalActiveCustomers = $query->whereHas('roles', function ($q) {
+        $totalActiveCustomers = (clone $query)->whereHas('roles', function ($q) {
             $q->where('name', 'customer');
         })->count();
-
-        // 04. Get total active couriers
-        $totalActiveCouriers = $query->whereHas('roles', function ($q) {
-            $q->where('name', 'courier');
-        })->count();
+        
+        $totalActiveCouriers = (clone $query)
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'courier');
+            })
+            ->whereHas('courierProfile', function ($q) {
+                $q->where('document_status', 'verified');
+            })
+            ->count();
 
         $wallet = auth()->user()->wallet;
 
@@ -58,7 +62,7 @@ class AdminDashboardStatsController extends Controller
             ->get();
 
         // 05. Total weekly earnings
-        $totalWeeklyEarnings = $earnings->sum('total');
+        $totalWeeklyEarnings = round((float) $earnings->sum('total'), 2);
 
         // 06. Weekly earnings per day
         $weeklyEarnings = $earnings;
@@ -111,10 +115,10 @@ class AdminDashboardStatsController extends Controller
             'total_active_customers' => $totalActiveCustomers,
             'total_active_couriers' => $totalActiveCouriers,
             'total_weekly_earnings' => $totalWeeklyEarnings,
-            'weekly_earnings' => $weeklyEarnings,
             'total_this_month_earning' => $totalThisMonthEarning,
             'total_last_six_months_earning' => $totalLastSixMonthsEarning,
             'total_last_year_earning' => $totalThisYearEarning,
+            'weekly_earnings' => $weeklyEarnings,
             'recent_five_pending_orders' => $recentFivePnedingOrders,
             
         ];
