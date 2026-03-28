@@ -24,7 +24,17 @@ class OrderFactory extends Factory
         $pickupLon = $this->faker->longitude();
         $deliveryLat = $this->faker->latitude();
         $deliveryLon = $this->faker->longitude();
-        $bookingDate = Carbon::now()->addDays(rand(0,5))->format('Y-m-d');
+        // Booking date: from last 7 months to next 5 days (you can adjust future range)
+        $bookingDate = Carbon::now()
+        ->subMonths(7)
+        ->addDays(rand(0, (26 * 30) + 28)) // total range: ~7 months + 5 days
+        ->startOfDay();
+
+        // Created date: must be before or equal to booking date
+        $createdAt = (clone $bookingDate)
+        ->subDays(rand(0, 10)) // created up to 10 days before booking
+        ->subHours(rand(0, 23))
+        ->subMinutes(rand(0, 59));
 
         $distance = $this->faker->randomFloat(2, 1, 50);
         $baseFare = 50;
@@ -68,6 +78,7 @@ class OrderFactory extends Factory
             'status'           => $status,
             'booking_date'     => $bookingDate,
             'is_paid'          => false, // default
+            'created_at'       => $createdAt,
         ];
     }
 
@@ -91,6 +102,7 @@ class OrderFactory extends Factory
                     'stripe_processing_fee'      => $stripeProcessingFee,
                     'net_amount'                 => $netAmount,
                     'currency'                   => 'chf',
+                    'created_at'                 => $order->created_at
                 ]);
 
                 $order->update([
@@ -121,11 +133,13 @@ class OrderFactory extends Factory
                     'stripe_processing_fee'      => $stripeProcessingFee,
                     'net_amount'                 => $netAmount,
                     'currency'                   => 'chf',
+                    'created_at'                 => $order->created_at
                 ]);
 
                 $order->refund()->create([
                     'payment_id' => $payment->id,
-                    'status' => 'requested'
+                    'status' => 'requested',
+                    'created_at' => $order->created_at
                 ]);
 
                 $order->update([
@@ -153,6 +167,7 @@ class OrderFactory extends Factory
                     'stripe_processing_fee'      => $stripeProcessingFee,
                     'net_amount'                 => $netAmount,
                     'currency'                   => 'chf',
+                    'created_at'                 => $order->created_at
                 ]);
 
                 $order->update([
