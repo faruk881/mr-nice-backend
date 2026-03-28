@@ -39,9 +39,12 @@ class UserProfileController extends Controller
      */
     public function show()
     {
-        $user = auth()->user()->load('courierProfile');
+        $user = auth()->user();
+        $role = str_replace('role:', '', $user->currentAccessToken()->abilities)[0];
+        $userArray = $user->toArray();
+        $userArray['role'] = $role;
 
-        return apiSuccess('Profile loaded', $user);
+        return apiSuccess('Profile loaded', $userArray);
     }
 
     /**
