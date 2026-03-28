@@ -186,7 +186,7 @@ class AdminActivityStatsController extends Controller
             'recent_five_pending_orders' => $recentFivePnedingOrders,
             'total_pending_couriers' => $totalPendingCouriers,
             'total_earnings' => $totalEarnings,
-            'earning_percentage_change' => $earningPercentageChange,
+            'earning_percentage_change' => round($earningPercentageChange, 2),
             'earning_trend_text' => $earningTrendText,
         ];
 

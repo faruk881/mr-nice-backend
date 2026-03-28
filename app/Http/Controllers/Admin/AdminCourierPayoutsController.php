@@ -134,7 +134,7 @@ class AdminCourierPayoutsController extends Controller
                 $account = Account::retrieve($courier->stripe_user_id);
     
                 if (!$account->charges_enabled && !$account->payouts_enabled) {
-                    return apiError('Courier Stripe account is not onboarded', 422,['code'=>'COURIER_STRIPE_ACCOUNT_NOT_ONBOARDED']););
+                    return apiError('Courier Stripe account is not onboarded', 422,['code'=>'COURIER_STRIPE_ACCOUNT_NOT_ONBOARDED']);
                 }
 
                 $payout->update([
