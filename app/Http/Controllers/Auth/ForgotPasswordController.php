@@ -44,7 +44,8 @@ class ForgotPasswordController extends Controller
             }
 
             // OTP already valid → block resend
-            return apiError('A verification code was already sent. Please try again after it expires.',429,['code'=>'OTP_ALREADY_SENT']);
+            // return apiError('A verification code was already sent. Please try again after it expires.',429,['code'=>'OTP_ALREADY_SENT']);
+            return apiSuccess('A verification code has been sent to your email');
         } catch (\Throwable $e) {
             throw $e;
         }

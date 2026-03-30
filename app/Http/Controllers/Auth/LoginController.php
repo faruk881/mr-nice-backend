@@ -29,7 +29,7 @@ class LoginController extends Controller
                 return apiError('error with mail sending', 403, ['code'=>'OTP_SEND_FAILED']);
             }
 
-            return apiError('Your email address is not verified. A verification code has been sent.', 403, ['code'=>'EMAIL_NOT_VERIFIED']);
+            return apiError('Your email address is not verified. Please go "Forgot Password" to reverify your email.', 403, ['code'=>'EMAIL_NOT_VERIFIED']);
         }
 
 
