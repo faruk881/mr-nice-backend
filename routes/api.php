@@ -40,6 +40,7 @@ use App\Http\Controllers\Profile\NotificationsController;
 use App\Http\Controllers\Profile\UserProfileController;
 use App\Http\Controllers\Stripe\StripeConnectWebhookController;
 use App\Http\Controllers\Stripe\StripeWebhookController;
+use App\Http\Controllers\SupportMessageController;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -96,17 +97,8 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     // Payment
     Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
 
-    // Contact Message
-    Route::apiResource('/contact-message',ContactMessageController::class)->only('store')->middleware('throttle:5,1');
-
     // Rate Courier
     Route::apiResource('/courier-ratings', CourierRatingController::class)->only('store');
-
-    // Get FAQs, Terms, Privacy Policy
-    Route::get('/faqs', [AdminFaqController::class, 'index'])->name('customer.faqs.index');
-    Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.terms.show');
-    Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
-
     
 });
 
@@ -207,6 +199,23 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
 
     // FAQs
     Route::apiResource('faqs', AdminFaqController::class);
+
+    // Support Messages
+    Route::get('support-messages',[SupportMessageController::class,'index'])->middleware('throttle:5,1')->name('admin.support-messages.index');
+    Route::patch('support-messages/{id}',[SupportMessageController::class,'update'])->middleware('throttle:5,1')->name('admin.support-messages.update');
     
 });
+
+// Public routes
+
+// Get FAQs, Terms, Privacy Policy
+Route::get('/faqs', [AdminFaqController::class, 'index'])->name('customer.faqs.index');
+Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.terms.show');
+Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
+
+// Contact Message
+Route::post('/support-messages',[SupportMessageController::class,'store'])->middleware('throttle:5,1');
+
+
+
 
