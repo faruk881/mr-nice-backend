@@ -41,7 +41,7 @@ class CourierOrderController extends Controller
         }
 
         // paginate
-        $orders = $query->latest()->paginate($perPage);
+        $orders = $query->latest('id')->paginate($perPage);
 
         return apiSuccess('Pending orders retrieved successfully', $orders);
     }

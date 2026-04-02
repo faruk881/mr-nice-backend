@@ -57,7 +57,7 @@ class CourierDeliveryController extends Controller
 
         // Get paginated results
         $deliveries = $query
-            ->latest()
+            ->latest('id')
             ->paginate($perPage)
             ->appends($request->query());
 

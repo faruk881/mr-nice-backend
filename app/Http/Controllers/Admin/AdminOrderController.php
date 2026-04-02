@@ -42,7 +42,7 @@ class AdminOrderController extends Controller
                 ->orWhere('package_items', 'LIKE', "%{$search}%");
             });
         })
-        ->latest()
+        ->latest('id')
         ->paginate($perPage)
         // This ensures your pagination links keep the filter parameters
         ->withQueryString(); 

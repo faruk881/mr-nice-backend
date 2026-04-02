@@ -47,7 +47,7 @@ class OrdersController extends Controller
                 break;
         }
     
-        $orders = $query->latest()->paginate($perPage);
+        $orders = $query->latest('id')->paginate($perPage);
     
         return apiSuccess('Orders loaded', $orders);
     }

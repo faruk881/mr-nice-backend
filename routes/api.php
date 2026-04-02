@@ -46,7 +46,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 // Stripe Webhooks
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
-// Route::post('/stripe-connect/webhook',[StripeConnectWebhookController::class,'handleWebhook']);
+
+// Onboard success message
+Route::get('/stripe/onboard/success', function () {
+    return 'Stripe onboarding completed successfully!';
+});
 
 // Notificaitons
 Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications.index')->middleware('auth:sanctum');

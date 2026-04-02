@@ -22,7 +22,7 @@ class AdminCourierPayoutsController extends Controller
         $perPage = $request->query('per_page',10);
 
         // Get payout history
-        $payoutHistory = Payout::paginate($perPage);
+        $payoutHistory = Payout::with('courier:id,name,email')->paginate($perPage);
 
         // return
         return apiSuccess('Payout history loaded successfully',$payoutHistory);
