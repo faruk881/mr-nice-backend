@@ -90,6 +90,20 @@ class DistanceService
     {
         $api_key = config('services.google_maps.key');
 
+        $allowed_cities = ['Sion', 'Sierre', 'Martigny', 'Monthey'];
+
+        // 1. Validate Pickup City
+        $pickup_city = $this->getCityFromCoordinates($pickup_lat, $pickup_lon, $api_key);
+        if (!in_array($pickup_city, $allowed_cities)) {
+            return ['success' => false, 'message' => "Pickup city ($pickup_city) is not allowed."];
+        }
+
+        // 2. Validate Delivery City
+        $delivery_city = $this->getCityFromCoordinates($delivery_lat, $delivery_lon, $api_key);
+        if (!in_array($delivery_city, $allowed_cities)) {
+            return ['success' => false, 'message' => "Delivery city ($delivery_city) is not allowed."];
+        }
+
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -122,5 +136,28 @@ class DistanceService
             Log::error("DistanceService Error: " . $e->getMessage());
             return ['success' => false, 'message' => 'An unexpected error occurred.'];
         }
+    }
+    
+    /**
+     * Helper to get City Name via Reverse Geocoding
+     */
+    private function getCityFromCoordinates(float $lat, float $lon, string $key): ?string
+    {
+        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+            'latlng' => "$lat,$lon",
+            'key' => $key,
+            'result_type' => 'locality' // Focuses results on the city/town level
+        ]);
+
+        if ($response->successful()) {
+            $results = $response->json('results');
+            if (!empty($results)) {
+                // Extracts the "long_name" from the address components
+                return $results[0]['address_components'][0]['long_name'] ?? null;
+            }
+        }
+        Log::error("Google API HTTP Error", ['status' => $response->status(), 'body' => $response->body()]);
+
+        return null;
     }
 }
