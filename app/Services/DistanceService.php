@@ -90,19 +90,20 @@ class DistanceService
     {
         $api_key = config('services.google_maps.key');
 
-        $allowed_cities = ['Sion', 'Sierre', 'Martigny', 'Monthey'];
+        // For later use to validate cities.
+        // $allowed_cities = ['Sion', 'Sierre', 'Martigny', 'Monthey'];
 
-        // 1. Validate Pickup City
-        $pickup_city = $this->getCityFromCoordinates($pickup_lat, $pickup_lon, $api_key);
-        if (!in_array($pickup_city, $allowed_cities)) {
-            return ['success' => false, 'message' => "Pickup city ($pickup_city) is not allowed."];
-        }
+        // // 1. Validate Pickup City
+        // $pickup_city = $this->getCityFromCoordinates($pickup_lat, $pickup_lon, $api_key);
+        // if (!in_array($pickup_city, $allowed_cities)) {
+        //     return ['success' => false, 'message' => "Pickup city ($pickup_city) is not allowed."];
+        // }
 
-        // 2. Validate Delivery City
-        $delivery_city = $this->getCityFromCoordinates($delivery_lat, $delivery_lon, $api_key);
-        if (!in_array($delivery_city, $allowed_cities)) {
-            return ['success' => false, 'message' => "Delivery city ($delivery_city) is not allowed."];
-        }
+        // // 2. Validate Delivery City
+        // $delivery_city = $this->getCityFromCoordinates($delivery_lat, $delivery_lon, $api_key);
+        // if (!in_array($delivery_city, $allowed_cities)) {
+        //     return ['success' => false, 'message' => "Delivery city ($delivery_city) is not allowed."];
+        // }
 
         try {
             $response = Http::withHeaders([
