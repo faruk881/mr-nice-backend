@@ -16,19 +16,19 @@ class AdminSeeder extends Seeder
     {
         $user = User::updateOrCreate(
             [
-                'email' => env('ADMIN_EMAIL'),
+                'email' => 'farismahdipro@gmail.com',
             ],
             [
-                'name' => env('ADMIN_NAME'),
-                'phone' => env('ADMIN_PHONE'),
-                'email' => env('ADMIN_EMAIL'),
-                'password' => env('ADMIN_PASSWORD'),
+                'name' => 'Admin',
+                'phone' => '01000000000',
+                'email' => 'farismahdipro@gmail.com',
+                'password' => 'rev88943',
                 'email_verified_at' => now()
             ]
         );
 
         $adminRole = Role::where('name', 'admin')->first();
-        if($adminRole) {
+        if ($adminRole) {
             $user->roles()->syncWithoutDetaching([$adminRole->id]);
         }
 
