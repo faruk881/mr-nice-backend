@@ -24,14 +24,14 @@ class DatabaseSeeder extends Seeder
         $this->call(PlatformCommissionSettingSeeder::class);
         $this->call(PayoutThrseholdSeeder::class);
         $this->call(RefundPolicySettingSeeder::class);
-        
+
         // Create users
-        User::factory()->customer()->count(10)->create();
-        User::factory()->courier()->count(10)->create();
-        Order::factory()->count(9999)->create()->each(function($order) {
-            $order->order_number = 'LX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
-            $order->saveQuietly(); // avoid triggering events again
-        });
-        
+        // User::factory()->customer()->count(10)->create();
+        // User::factory()->courier()->count(10)->create();
+        // Order::factory()->count(9999)->create()->each(function($order) {
+        //     $order->order_number = 'LX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
+        //     $order->saveQuietly(); // avoid triggering events again
+        // });
+
     }
 }
