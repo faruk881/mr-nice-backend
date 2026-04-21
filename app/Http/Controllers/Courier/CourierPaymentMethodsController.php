@@ -45,7 +45,7 @@ class CourierPaymentMethodsController extends Controller
                     // Not fully onboarded → create onboarding link
                     $accountLink = AccountLink::create([
                         'account' => $courier->stripe_user_id,
-                        'refresh_url' => env('APP_FRONTEND_URL') . '/me/payment-management',
+                        'refresh_url' => config('app.frontend_url') . '/me/payment-management',
                         'return_url' => url('/api/stripe/onboard/success'),
                         'type' => 'account_onboarding',
                     ]);
