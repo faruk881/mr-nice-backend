@@ -75,14 +75,14 @@ Route::prefix('auth')->group(function () {
 // Profile Group
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile/password', [PasswordUpdateController::class, 'update']);
-    
+
     // Profile
     Route::get('/profile', [UserProfileController::class, 'show'])->name('customer.profile.show');
     Route::patch('/profile', [UserProfileController::class, 'update'])->name('customer.profile.update');
 });
 
 // Customer Routes
-Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')->group(function () {
+Route::prefix('customer')->middleware(['auth:sanctum', 'role:customer'], 'status')->group(function () {
 
     // Order Price Estimation
     Route::post('orders/calculate-price', [OrderPriceController::class, 'estimate']);
@@ -92,23 +92,22 @@ Route::prefix('customer')->middleware(['auth:sanctum','role:customer'],'status')
     Route::post('payment-methods', [CustomerPaymentMethodsController::class, 'store'])->name('customer.payment-methods.store');
 
     // Become Courier
-    Route::post('/become-courier',[CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
-    
+    Route::post('/become-courier', [CustomerCourierController::class, 'store'])->name('customer.become-courier'); // Customer will become courier
+
     // Orders
     Route::post('/orders', [OrdersController::class, 'store'])->middleware('throttle:5,1');
-    Route::apiResource('/orders', OrdersController::class)->only(['index','show','update']);
+    Route::apiResource('/orders', OrdersController::class)->only(['index', 'show', 'update']);
 
     // Payment
-    Route::post('/orders/{order}/pay',[PaymentController::class,'store'])->name('customer.order.pay');
+    Route::post('/orders/{order}/pay', [PaymentController::class, 'store'])->name('customer.order.pay');
 
     // Rate Courier
     Route::apiResource('/courier-ratings', CourierRatingController::class)->only('store');
-    
 });
 
 
 // Courier Routes
-Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->group(function () {
+Route::prefix('courier')->middleware(['auth:sanctum', 'role:courier', 'status'])->group(function () {
 
     // Orders Routes
     Route::get('orders', [CourierOrderController::class, 'index'])->name('courier.orders.index');
@@ -119,8 +118,8 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
         // Orders
         Route::get('/orders/{order}', [CourierOrderController::class, 'show'])->name('courier.orders.show');
         Route::patch('/orders/{order}/accept', [CourierOrderController::class, 'accept'])->name('courier.orders.accept');
-        Route::get('/deliveries',[CourierDeliveryController::class, 'index'])->name('courier.deliveries.index');
-        Route::get('/deliveries/{id}',[CourierDeliveryController::class, 'show'])->name('courier.deliveries.show');
+        Route::get('/deliveries', [CourierDeliveryController::class, 'index'])->name('courier.deliveries.index');
+        Route::get('/deliveries/{id}', [CourierDeliveryController::class, 'show'])->name('courier.deliveries.show');
         Route::patch('/deliveries/{id}/pickup', [CourierDeliveryController::class, 'pickup'])->name('courier.orders.pickup');
         Route::patch('/deliveries/{id}/deliver', [CourierDeliveryController::class, 'deliver'])->name('courier.orders.deliver');
 
@@ -130,21 +129,19 @@ Route::prefix('courier')->middleware(['auth:sanctum','role:courier','status'])->
         Route::get('/earnings/payout-history', [CourierEarningsController::class, 'payoutHistory'])->name('courier.earnings.payout-history');
 
         // Payouts
-        Route::post('/payouts',[CourierPayoutsController::class,'store'])->name('courier.payouts.store');
+        Route::post('/payouts', [CourierPayoutsController::class, 'store'])->name('courier.payouts.store');
 
         // Payment Methods
-        Route::get('/payment-methods',[CourierPaymentMethodsController::class,'index'])->name('courier.payment-methods.index');
+        Route::get('/payment-methods', [CourierPaymentMethodsController::class, 'index'])->name('courier.payment-methods.index');
 
         // Stripe
         // Route::get('/stripe/connect', [CourierStripeController::class, 'redirectToStripe'])->name('courier.stripe.connect');
-        
+
 
     });
-
-
 });
 
-Route::prefix('courier')->group(function(){
+Route::prefix('courier')->group(function () {
     // Stripe callback
     Route::get('/stripe/callback', [CourierStripeController::class, 'handleStripeCallback'])->name('courier.stripe.callback');
 });
@@ -154,23 +151,23 @@ Route::prefix('courier')->group(function(){
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard-stats',[AdminDashboardStatsController::class,'index'])->name('admin.dashboard-stats');
-    Route::get('/activity-stats',[AdminActivityStatsController::class,'index'])->name('admin.activity-stats');
+    Route::get('/dashboard-stats', [AdminDashboardStatsController::class, 'index'])->name('admin.dashboard-stats');
+    Route::get('/activity-stats', [AdminActivityStatsController::class, 'index'])->name('admin.activity-stats');
 
     // Delivery
     Route::get('/deliveries', [DeliveryApprovalController::class, 'index'])->name('admin.deliveries.index');
     Route::patch('/deliveries/{orderNumber}', [DeliveryApprovalController::class, 'update'])->name('admin.deliveries.update');
 
     // Platform commission settings
-    Route::get('/platform-commission-settings',[PlatformCommissionSettingController::class,'index'])->name('admin.platform-commission-settings.index');
-    Route::patch('/platform-commission-settings',[PlatformCommissionSettingController::class,'update'])->name('admin.platform-commission-settings.update');
+    Route::get('/platform-commission-settings', [PlatformCommissionSettingController::class, 'index'])->name('admin.platform-commission-settings.index');
+    Route::patch('/platform-commission-settings', [PlatformCommissionSettingController::class, 'update'])->name('admin.platform-commission-settings.update');
 
     // Refund Policy 
-    Route::get('/refund_policy_settings',[RefundPolicySettingsController::class,'index'])->name('admin.refund-policy-settings.index');
-    Route::patch('/refund_policy_settings',[RefundPolicySettingsController::class,'update'])->name('admin.refund-policy-settings.update');
+    Route::get('/refund_policy_settings', [RefundPolicySettingsController::class, 'index'])->name('admin.refund-policy-settings.index');
+    Route::patch('/refund_policy_settings', [RefundPolicySettingsController::class, 'update'])->name('admin.refund-policy-settings.update');
 
     // Courier Payouts
-    Route::get('/courier-payouts', [AdminCourierPayoutsController::class, 'index'])->name('courier.earnings.index');
+    Route::get('/courier-payouts', [AdminCourierPayoutsController::class, 'index'])->name('admin.courier.earnings.index');
     Route::patch('/courier-payouts/{id}', [AdminCourierPayoutsController::class, 'update'])->name('courier.earnings.update');
 
     // Get and Update Pricing Settings
@@ -180,18 +177,18 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/delivery-pricing-settings/base-fare', [DeliveryFeeSettingController::class, 'updateBaseFare'])->name('admin.delivery-pricing-settings.update-base-fare');
 
     // Manage Users
-    Route::get('/users',[AdminUsersController::class,'index'])->name('admin.users.index');
+    Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users.index');
     Route::patch('/couriers/{courier}/verification', [AdminUsersController::class, 'updateVerification'])->name('admin.couriers.update.verification');
     Route::patch('/users/{user}/status', [AdminUsersController::class, 'updateStatus'])->name('admin.users.update.status');
 
 
     // Payout Thrseholds
-    Route::get('/payout-thrseholds',[PayoutThrseholdsController::class,'index'])->name('admin.payout-thrseholds.index');
-    Route::patch('/payout-thrseholds',[PayoutThrseholdsController::class,'update'])->name('admin.payout-thrseholds.update');
-    
+    Route::get('/payout-thrseholds', [PayoutThrseholdsController::class, 'index'])->name('admin.payout-thrseholds.index');
+    Route::patch('/payout-thrseholds', [PayoutThrseholdsController::class, 'update'])->name('admin.payout-thrseholds.update');
+
     // Order Management
     Route::apiResource('orders', AdminOrderController::class)->only(['index']);
-    Route::patch('/orders/{order}/refund',[AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');
+    Route::patch('/orders/{order}/refund', [AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');
 
     // Terms
     Route::get('terms', [AdminTermsController::class, 'show'])->name('admin.terms.show');
@@ -205,9 +202,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::apiResource('faqs', AdminFaqController::class);
 
     // Support Messages
-    Route::get('support-messages',[SupportMessageController::class,'index'])->middleware('throttle:5,1')->name('admin.support-messages.index');
-    Route::patch('support-messages/{id}',[SupportMessageController::class,'update'])->middleware('throttle:5,1')->name('admin.support-messages.update');
-    
+    Route::get('support-messages', [SupportMessageController::class, 'index'])->middleware('throttle:5,1')->name('admin.support-messages.index');
+    Route::patch('support-messages/{id}', [SupportMessageController::class, 'update'])->middleware('throttle:5,1')->name('admin.support-messages.update');
 });
 
 // Public routes
@@ -218,8 +214,4 @@ Route::get('/terms', [AdminTermsController::class, 'show'])->name('customer.term
 Route::get('/privacy-policy', [AdminPrivacyController::class, 'show'])->name('customer.privacy.show');
 
 // Contact Message
-Route::post('/support-messages',[SupportMessageController::class,'store'])->middleware('throttle:5,1');
-
-
-
-
+Route::post('/support-messages', [SupportMessageController::class, 'store'])->middleware('throttle:5,1');
