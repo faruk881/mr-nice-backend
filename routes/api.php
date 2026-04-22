@@ -187,7 +187,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     Route::patch('/payout-thrseholds', [PayoutThrseholdsController::class, 'update'])->name('admin.payout-thrseholds.update');
 
     // Order Management
-    Route::apiResource('orders', AdminOrderController::class)->only(['index']);
+    // Route::apiResource('orders', AdminOrderController::class)->only(['index']);
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.order.index');
     Route::patch('/orders/{order}/refund', [AdminOrderRefundController::class, 'update'])->name('admin.orders.refunds.update');
 
     // Terms
