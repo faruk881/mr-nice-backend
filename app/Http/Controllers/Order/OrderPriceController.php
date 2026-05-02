@@ -41,7 +41,7 @@ class OrderPriceController extends Controller
         );
 
         if (!$measurement['success']) {
-            return apiError('Failed to calculate distance: ' . ($measurement['message'] ?? ''), 500, ['code'=>'DISTANCE_CALCULATION_FAILED']);
+            return apiError('Failed to calculate distance: ' . ($measurement['message'] ?? ''), 500, ['code' => 'DISTANCE_CALCULATION_FAILED']);
         }
 
         // IMPORTANT: Use camelCase keys to match the DistanceService output
@@ -52,7 +52,7 @@ class OrderPriceController extends Controller
         $settings = DeliveryFeeSetting::first();
 
         if (!$settings) {
-            return apiError('Delivery pricing settings not configured in database', 404, ['code'=>'DELIVERY_PRICING_SETTINGS_NOT_FOUND']);
+            return apiError('Delivery pricing settings not configured in database', 404, ['code' => 'DELIVERY_PRICING_SETTINGS_NOT_FOUND']);
         }
 
         // 4. Extract Rates
@@ -72,11 +72,11 @@ class OrderPriceController extends Controller
         // 5. Apply Pricing Formula
         // Formula: (Distance * Rate) + Package Fee. 
         // If the result is lower than the Base Fare, use the Base Fare.
-        $calculated_total = ($distance * $price_per_km) + $package_fee;
-        $final_price = round(max($calculated_total, $base_fare), 2);
+        $calculated_total = ($distance * $price_per_km) + $package_fee + $base_fare;
+        $final_price = round($calculated_total, 2);
 
         // 6. Response Construction
-        
+
         $data = [
             'items'            => $request->items,
             'distance'         => $distance,

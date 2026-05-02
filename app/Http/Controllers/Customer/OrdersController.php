@@ -25,12 +25,12 @@ class OrdersController extends Controller
     {
         $perPage = $request->query('per_page', 10);
         $status = $request->query('status', 'all');
-    
+
         $query = auth()->user()->orders()
             ->with('refund')
             ->where('customer_id', auth()->id())
             ->where('status', '!=', 'pending_payment'); // exclude pending_payment
-    
+
         switch ($status) {
             case 'active':
                 $query->where('status', 'pending');
@@ -46,9 +46,9 @@ class OrdersController extends Controller
                 // no additional filtering
                 break;
         }
-    
+
         $orders = $query->latest('id')->paginate($perPage);
-    
+
         return apiSuccess('Orders loaded', $orders);
     }
 
@@ -56,19 +56,19 @@ class OrdersController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(DeliveryRequestRequest $request, DistanceService $distance_service)
-    {       
+    {
         $validated = $request->validated();
 
         // Standardize on snake_case for all logic variables
         $booking_date = $validated['booking_date'];
-        
+
         // Calculate departure time
         $departure_time = isset($booking_date)
 
             // $booking_date only contains date. Sent future time. 
             ? Carbon::parse($booking_date)->setTime(Carbon::now()->hour, Carbon::now()->minute + 1)->toIso8601String()
             : Carbon::now()->addMinute()->toIso8601String();
-        
+
         // Call service (Method remains camelCase per PSR-12)
         $measure = $distance_service->distanceMeasure(
             'google',
@@ -79,8 +79,8 @@ class OrdersController extends Controller
             $validated['delivery_lon']
         );
 
-        if(!$measure['success']) {
-            return apiError($measure['message'], 400, ['code'=>'DISTANCE_MEASURE_FAILED']);
+        if (!$measure['success']) {
+            return apiError($measure['message'], 400, ['code' => 'DISTANCE_MEASURE_FAILED']);
         }
 
         $distance = $measure['distance_km'];
@@ -98,32 +98,32 @@ class OrdersController extends Controller
         ];
 
         $package_fee = $package_prices[$validated['package_size']];
-        $total_fee = max($distance_fee + $package_fee, $base_fare);
+        $total_fee = $distance_fee + $package_fee + $base_fare;
 
         // Use Database Transactions for data integrity
         return DB::transaction(function () use ($validated, $distance, $base_fare, $per_km_price, $package_fee, $total_fee) {
-            
+
             $order = Order::create(array_merge($validated, [
-            'customer_id'      => auth()->id(),
-            'order_number'     => strtoupper(Str::random(10)), // unique order number
-            'pickup_address'   => $validated['pickup_address'],
-            'pickup_lat'       => $validated['pickup_lat'],
-            'pickup_long'      => $validated['pickup_lon'],
-            'pickup_notes'     => $validated['pickup_notes'] ?? null,
-            'delivery_address' => $validated['delivery_address'],
-            'delivery_lat'     => $validated['delivery_lat'],
-            'delivery_long'    => $validated['delivery_lon'],
-            'delivery_notes'   => $validated['delivery_notes'] ?? null,
-            'package_items'    => $validated['items'],
-            'package_size'     => $validated['package_size'],
-            'additional_notes' => $validated['additional_notes'] ?? null,
-            'distance'         => $distance,
-            'base_fare'        => $base_fare,
-            'per_km_fee'       => $per_km_price,
-            'package_fee'      => $package_fee,
-            'total_fee'        => $total_fee,
-            'status'           => 'pending_payment',
-            'booking_date'     => $validated['booking_date']
+                'customer_id'      => auth()->id(),
+                'order_number'     => strtoupper(Str::random(10)), // unique order number
+                'pickup_address'   => $validated['pickup_address'],
+                'pickup_lat'       => $validated['pickup_lat'],
+                'pickup_long'      => $validated['pickup_lon'],
+                'pickup_notes'     => $validated['pickup_notes'] ?? null,
+                'delivery_address' => $validated['delivery_address'],
+                'delivery_lat'     => $validated['delivery_lat'],
+                'delivery_long'    => $validated['delivery_lon'],
+                'delivery_notes'   => $validated['delivery_notes'] ?? null,
+                'package_items'    => $validated['items'],
+                'package_size'     => $validated['package_size'],
+                'additional_notes' => $validated['additional_notes'] ?? null,
+                'distance'         => $distance,
+                'base_fare'        => $base_fare,
+                'per_km_fee'       => $per_km_price,
+                'package_fee'      => $package_fee,
+                'total_fee'        => $total_fee,
+                'status'           => 'pending_payment',
+                'booking_date'     => $validated['booking_date']
             ]));
 
             // Update with formatted ID
@@ -158,22 +158,21 @@ class OrdersController extends Controller
         // Get the order
         $order = auth()->user()->orders()
             ->with([
-                'courier' => function($query) {
+                'courier' => function ($query) {
                     // This adds a 'ratings_received_avg_rating' field to the courier object
-                    $query->withAvg('ratingsReceived', 'rating'); 
-                }, 
-                'courier.courierProfile', 
-                'payments', 
+                    $query->withAvg('ratingsReceived', 'rating');
+                },
+                'courier.courierProfile',
+                'payments',
                 'refund'
             ])
-            ->where('order_number',$orderNumber)->first();
+            ->where('order_number', $orderNumber)->first();
 
         // Check if order exists
         if (!$order) {
-            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
+            return apiError('Order not found', 404, ['code' => 'ORDER_NOT_FOUND']);
         }
-        return apiSuccess('Order loaded',$order);
-
+        return apiSuccess('Order loaded', $order);
     }
 
     /**
@@ -188,28 +187,28 @@ class OrdersController extends Controller
             ]);
         }
         // Get the order
-        $order = Order::where('order_number',$orderNumber)->first();
+        $order = Order::where('order_number', $orderNumber)->first();
 
         // Check if order exists
-        if(!$order) {
-            return apiError('Order not found', 404, ['code'=>'ORDER_NOT_FOUND']);
+        if (!$order) {
+            return apiError('Order not found', 404, ['code' => 'ORDER_NOT_FOUND']);
         }
 
-        if($order->customer_id !== auth()->id()) {
-            return apiError('You are not authorized to update this order', 403, ['code'=>'NOT_AUTHORIZED']);
+        if ($order->customer_id !== auth()->id()) {
+            return apiError('You are not authorized to update this order', 403, ['code' => 'NOT_AUTHORIZED']);
         }
 
         // Cancel if order status is only pending_payment and pending
-        if($order->status == 'pending_payment') {
+        if ($order->status == 'pending_payment') {
             $order->status = 'cancelled';
             $order->status_reason = $request->cancel_reason;
             $order->save();
-            return apiSuccess('Order Cancelled.',$order); 
+            return apiSuccess('Order Cancelled.', $order);
         }
-        
-        
-        if($order->is_paid && $order->status == 'pending') {
-            
+
+
+        if ($order->is_paid && $order->status == 'pending') {
+
             // Get the payment
             $payment = $order->payments()->where('status', 'succeeded')->latest()->first();
             $refund = Refund::create([
@@ -224,12 +223,10 @@ class OrdersController extends Controller
             ]);
 
             return apiSuccess('Order cancelled and refund requested.', $order);
-
         }
 
         // Otherwise cannot cancel the order
-        return apiError('Cannot cancel this order', 403, ['code'=>'NOT_ALLOWED']);
-        
+        return apiError('Cannot cancel this order', 403, ['code' => 'NOT_ALLOWED']);
     }
 
     /**
